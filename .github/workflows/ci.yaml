@@ -1,0 +1,63 @@
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  UV_PYTHON_DOWNLOADS: never
+
+jobs:
+  quality:
+    name: Calidad (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+        python-version: [ "3.13", "3.14" ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Instalar uv y Python
+        uses: astral-sh/setup-uv@v10
+        with:
+          version: "0.8.15"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          python-version-file: ".python-version"
+
+      - name: Sincronizar dependencias (falla si el lock deriva)
+        run: uv sync --all-packages --locked --dev
+
+      - name: Comprobar formato (Ruff)
+        run: uv run ruff format --check .
+
+      - name: Lint (Ruff)
+        run: uv run ruff check --output-format=github .
+
+      - name: Comprobación de tipos (ty)
+        run: uv run ty check --error-on-warning
+
+      - name: Tests (pytest + cobertura)
+        run: uv run --with pytest-cov pytest --cov=packages --cov-report=xml --cov-report=term-missing
+
+      - name: Subir cobertura a Codecov
+        if: matrix.os == 'ubuntu-latest'
+        uses: codecov/codecov-action@v7
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}

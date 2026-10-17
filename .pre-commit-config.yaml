@@ -1,0 +1,87 @@
+# .pre-commit-config.yaml
+# Configuración de pre-commit para el workspace acodo.
+# pre-commit: comprobaciones rápidas (formato, lint, tipos, tests sin cobertura).
+# pre-push:   suite completa (además de cobertura y build de Zensical).
+
+default_language_version:
+  python: python3.12
+
+# Instala automáticamente ambos tipos de hook al ejecutar `pre-commit install`.
+default_install_hook_types: [ pre-commit, pre-push ]
+
+# Los hooks sin `stages` explícito se ejecutan en la etapa pre-commit.
+default_stages: [ pre-commit ]
+
+repos:
+  # ---------------------------------------------------------------------------
+  # Ruff: formato y lint. Se ejecuta en commit y en push.
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.20
+    hooks:
+      - id: ruff-format
+        name: ruff (formato)
+        entry: uv run ruff format
+        stages: [ pre-commit, pre-push ]
+      - id: ruff
+        name: ruff (lint)
+        entry: uv run ruff check
+        args: [ --fix, --exit-non-zero-on-fix ]
+        stages: [ pre-commit, pre-push ]
+
+  # ---------------------------------------------------------------------------
+  # ty: comprobación de tipos de Astral. Se ejecuta en commit y en push.
+  # El hook oficial resuelve las dependencias declaradas en pyproject.toml.
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/astral-sh/ty-pre-commit
+    rev: v0.0.82
+    hooks:
+      - id: ty
+        name: ty (tipos)
+        entry: uv run ty check
+        stages: [ pre-commit, pre-push ]
+
+  # ---------------------------------------------------------------------------
+  # pytest (sin cobertura). Solo en pre-commit.
+  # `always_run` y `pass_filenames: false` garantizan que se ejecute la suite
+  # completa aunque el commit solo toque archivos que no sean tests.
+  # ---------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: pytest-pre-commit
+        name: pytest (pre-commit, sin cobertura)
+        entry: uv run pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [ pre-push ]
+
+  # ---------------------------------------------------------------------------
+  # pytest con cobertura. Solo en pre-push.
+  # `--with pytest-cov` asegura que la herramienta esté disponible aunque no
+  # figure en el grupo dev del workspace.
+  # Ajusta `--cov` a la ruta real de tu código fuente (aquí se asume `src/`).
+  # ---------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: pytest-pre-push
+        name: pytest (pre-push, con cobertura)
+        entry: uv run --with pytest-cov pytest --cov=src --cov-report=term-missing
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [ pre-push ]
+
+  # ---------------------------------------------------------------------------
+  # Zensical: construcción de la documentación. Solo en pre-push.
+  # No hay hook oficial, así que se invoca la CLI directamente con uv run.
+  # ---------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: zensical-build
+        name: zensical (build de documentación)
+        entry: uv run zensical build
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [ pre-push ]
