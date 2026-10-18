@@ -19,7 +19,6 @@ from pathlib import Path
 
 import typer
 
-from acodo_cli.banner import show_banner
 from acodo_cli.commands import (
     api,
     backup,
@@ -61,7 +60,6 @@ app.command("todo")(todo.main)
 def _main(ctx: typer.Context, version: VersionOption = False) -> None:
     """Comando por defecto: sin subcomando muestra el banner y la ayuda."""
     if ctx.invoked_subcommand is None:
-        show_banner()
         help_text = ctx.get_help()
         if help_text:
             typer.echo(help_text)

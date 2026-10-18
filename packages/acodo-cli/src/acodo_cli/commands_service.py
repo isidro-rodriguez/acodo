@@ -19,10 +19,10 @@ from acodo.utils import valid_social_url, valid_url
 from acodo.utils.types import SocialLink
 from acodo_cli.config import ConfigError, load_config
 from acodo_cli.models import AcodoConfig
-from acodo_cli.theme import ACODO_THEME
+from acodo_cli.theme import THEME
 
-console = Console(theme=ACODO_THEME, highlight=False)
-err_console = Console(theme=ACODO_THEME, highlight=False, stderr=True)
+console = Console(theme=THEME, highlight=False)
+err_console = Console(theme=THEME, highlight=False, stderr=True)
 
 DEFAULT_API_URL = "https://api.github.com"
 JWT_LIFETIME = 480  # 8 min: margen bajo el máximo de 10 min de GitHub.

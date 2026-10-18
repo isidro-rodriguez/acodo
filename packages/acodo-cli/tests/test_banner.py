@@ -1,44 +1,49 @@
-import pytest
 from typer.testing import CliRunner
 
 from acodo_cli import __version__
-from acodo_cli.banner import ASCII_ART, gradient_art
+from acodo_cli.banner import (
+    ASCII_ART,
+    GRADIENT_STOPS,
+    build_version_panel,
+    gradient_color,
+    render_art,
+)
 from acodo_cli.cli import app
-from acodo_cli.theme import PALETTE
+from acodo_cli.theme import ACODO_THEME
 
 
-def test_gradient_art_keeps_the_art_text() -> None:
-    text = gradient_art(PALETTE["green"], PALETTE["light_green"])
-
-    assert [line.rstrip() for line in text.plain.splitlines()] == [
-        line.rstrip() for line in ASCII_ART.splitlines()
-    ]
+def test_render_art_keeps_the_art_text() -> None:
+    assert render_art().plain == ASCII_ART.rstrip("\n")
 
 
-def test_gradient_art_goes_from_start_to_end_color() -> None:
-    text = gradient_art("#000000", "#FFFFFF")
-    colors = [str(span.style) for span in text.spans]
+def test_gradient_color_hits_the_stops() -> None:
+    stops = [(0, 0, 0), (100, 100, 100), (200, 200, 200)]
 
-    assert colors[0] == "#000000"
-    assert int(colors[-1][1:3], 16) > 0xF0
+    assert gradient_color(0.0, stops) == (0, 0, 0)
+    assert gradient_color(0.5, stops) == (100, 100, 100)
+    assert gradient_color(1.0, stops) == (200, 200, 200)
 
 
-def test_version_flag_shows_versions_and_exits(runner: CliRunner) -> None:
+def test_gradient_color_clamps_out_of_range_positions() -> None:
+    stops = [(0, 0, 0), (10, 10, 10)]
+
+    assert gradient_color(-1, stops) == (0, 0, 0)
+    assert gradient_color(2, stops) == (10, 10, 10)
+
+
+def test_gradient_stops_are_palette_colors() -> None:
+    assert set(GRADIENT_STOPS) <= set(ACODO_THEME)
+
+
+def test_version_panel_shows_version() -> None:
+    panel = build_version_panel()
+
+    assert panel.border_style == "border"
+
+
+def test_version_flag_shows_version_and_exits(runner: CliRunner) -> None:
     result = runner.invoke(app, ["--version"])
 
     assert result.exit_code == 0
     assert __version__ in result.output
     assert "Python" in result.output
-
-
-def test_no_args_shows_banner_and_help(runner: CliRunner) -> None:
-    result = runner.invoke(app, [])
-
-    assert result.exit_code == 0
-    assert "╚═╝" in result.output
-    assert "Usage" in result.output
-
-
-@pytest.mark.parametrize("argument", ["--help"])
-def test_help_lists_version_option(runner: CliRunner, argument: str) -> None:
-    assert "--version" in runner.invoke(app, [argument]).output

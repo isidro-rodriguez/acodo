@@ -12,8 +12,7 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 ### Added
 
 - Versión inicial dentro del workspace de Acodo, adaptada desde el paquete independiente `acodo-cli` 0.3.0.
-- Módulo `theme.py` con la paleta de Acodo como `ACODO_THEME` de Rich y estilos para la ayuda de Typer.
-- Módulo `banner.py` con el ASCII art con degradado y el panel de `--version`, que faltaban aunque `cli.py` ya los importaba.
+- Tests de `theme.py` (solo paleta de Acodo en el markup y en la ayuda de Typer) y de `banner.py` (degradado y panel de `--version`).
 
 ### Changed
 
