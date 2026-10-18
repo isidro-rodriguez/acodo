@@ -1,5 +1,6 @@
 import json
 import sys
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -11,13 +12,18 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 
 from acodo_cli.commands_service import (
     build_jwt,
-    discover_package_name,
+    find_pycache,
+    is_excluded,
     load_gh_config,
     load_private_key,
     normalize_repo,
+    output_path,
     resolve_api_url,
     run,
+    scope_files,
 )
+from acodo_cli.config import load_config
+from acodo_cli.models import AcodoConfig, OutputConfig
 
 VALID_CONFIG = {
     "repository": "owner/repo",
@@ -55,28 +61,68 @@ def test_run_returns_exit_code_and_uses_cwd(tmp_path: Path) -> None:
     assert code == 5
 
 
-def test_discover_package_name_single(tmp_path: Path) -> None:
-    (tmp_path / "pkg").mkdir()
-    (tmp_path / "pkg" / "__init__.py").write_text("")
+@pytest.mark.parametrize(
+    ("relative", "patterns", "expected"),
+    [
+        ("src/.venv/x.py", [".venv"], True),
+        ("src/a.py", [".venv"], False),
+        ("docs/api/a.md", ["docs/api/"], True),
+        ("docs/apis/a.md", ["docs/api"], False),
+        ("src/pkg/a_test.py", ["*_test.py"], True),
+        (".github/x.yml", [".git"], False),
+        ("src/a.py", [], False),
+    ],
+)
+def test_is_excluded(relative: str, patterns: list[str], expected: bool) -> None:
+    assert is_excluded(Path(relative), patterns) is expected
 
-    assert discover_package_name(tmp_path) == "pkg"
+
+def make_config(root: Path, content: str) -> AcodoConfig:
+    (root / "acodo.toml").write_text(content, encoding="utf-8")
+    return load_config(root)
 
 
-@pytest.mark.parametrize("names", [[], ["a", "b"]])
-def test_discover_package_name_requires_exactly_one(
-    tmp_path: Path, names: list[str]
+def test_scope_files_respects_include_suffix_and_exclude(tmp_path: Path) -> None:
+    for name in ("src/a.py", "src/b.txt", "src/skip/c.py", "lib/d.py", "otro/e.py"):
+        (tmp_path / name).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / name).write_text("")
+    cfg = make_config(
+        tmp_path,
+        '[all]\ninclude = ["src/", "src/", "falta/"]\nexclude = ["skip"]\n'
+        '[lint]\ninclude = ["lib/"]\n',
+    )
+
+    found = [
+        p.relative_to(cfg.root).as_posix() for p in scope_files(cfg, "lint", ".py")
+    ]
+
+    assert found == ["src/a.py", "lib/d.py"]
+
+
+def test_find_pycache_skips_excluded_paths(tmp_path: Path) -> None:
+    (tmp_path / "src" / "__pycache__").mkdir(parents=True)
+    (tmp_path / "src" / ".venv" / "__pycache__").mkdir(parents=True)
+    cfg = make_config(tmp_path, '[all]\ninclude = ["src/"]\nexclude = [".venv"]\n')
+
+    assert find_pycache(cfg) == [cfg.root / "src" / "__pycache__"]
+
+
+@pytest.mark.parametrize(
+    ("target", "version", "suffix", "expected"),
+    [
+        ("b.zip", "1.2.0", True, "b-1.2.0.zip"),
+        ("out/b.tar.gz", "1.2.0", True, "out/b-1.2.0.tar.gz"),
+        ("b.zip", "1.2.0", False, "b.zip"),
+        ("b.zip", "", True, "b.zip"),
+    ],
+)
+def test_output_path(
+    tmp_path: Path, target: str, version: str, suffix: bool, expected: str
 ) -> None:
-    for name in names:
-        (tmp_path / name).mkdir()
-        (tmp_path / name / "__init__.py").write_text("")
+    cfg = make_config(tmp_path, "")
+    cfg = replace(cfg, version=version)
 
-    with pytest.raises(typer.Exit):
-        discover_package_name(tmp_path)
-
-
-def test_discover_package_name_requires_existing_dir(tmp_path: Path) -> None:
-    with pytest.raises(typer.Exit):
-        discover_package_name(tmp_path / "no_existe")
+    assert output_path(cfg, OutputConfig(target, suffix)) == cfg.root / expected
 
 
 # ---------------------------------------------------------------------------

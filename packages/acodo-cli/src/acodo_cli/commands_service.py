@@ -6,7 +6,8 @@ import subprocess
 import time
 import urllib.error
 import urllib.request
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
+from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any, NoReturn
 
@@ -18,7 +19,7 @@ from rich.markup import escape
 from acodo.utils import valid_social_url, valid_url
 from acodo.utils.types import SocialLink
 from acodo_cli.config import ConfigError, load_config
-from acodo_cli.models import AcodoConfig
+from acodo_cli.models import AcodoConfig, OutputConfig
 from acodo_cli.theme import THEME
 
 console = Console(theme=THEME, highlight=False)
@@ -77,35 +78,79 @@ def get_config() -> AcodoConfig:
         fail(str(exc))
 
 
+def output_path(cfg: AcodoConfig, output: OutputConfig) -> Path:
+    """Ruta absoluta del fichero generado, con la versión si `version_suffix`.
+
+    Con `backup.zip` y versión `1.2.0` devuelve `backup-1.2.0.zip`; con
+    `backup.tar.gz`, `backup-1.2.0.tar.gz`.
+    """
+    target = cfg.root / output.target
+    if not (output.version_suffix and cfg.version):
+        return target
+    extension = ".tar.gz" if target.name.endswith(".tar.gz") else target.suffix
+    stem = target.name.removesuffix(extension)
+    return target.with_name(f"{stem}-{cfg.version}{extension}")
+
+
 def run(command: Sequence[str], cwd: Path) -> int:
     """Ejecuta `command` en `cwd` y devuelve su código de salida."""
     return subprocess.run(command, cwd=cwd, check=False).returncode
 
 
-def find_pycache(root: Path, dirs: list[str]) -> list[Path]:
-    """Localiza los `__pycache__` bajo `dirs` (sin tocar `.venv`)."""
+def is_excluded(relative: Path, patterns: Sequence[str]) -> bool:
+    """Indica si `relative` (ruta desde la raíz) encaja con algún patrón `exclude`.
+
+    Un patrón sin `/` interior (p. ej. `.venv`) se compara con cada componente
+    de la ruta; uno con `/` (p. ej. `docs/api`) con su comienzo.
+
+    Examples:
+        >>> is_excluded(Path("src/.venv/x.py"), [".venv"])
+        True
+        >>> is_excluded(Path("docs/api/a.md"), ["docs/api/"])
+        True
+        >>> is_excluded(Path("src/a.py"), [".venv"])
+        False
+    """
+    posix = relative.as_posix()
+    for raw in patterns:
+        pattern = raw.strip("/")
+        if "/" in pattern:
+            if fnmatch(posix, pattern) or posix.startswith(f"{pattern}/"):
+                return True
+        elif any(fnmatch(part, pattern) for part in relative.parts):
+            return True
+    return False
+
+
+def scope_files(cfg: AcodoConfig, name: str, suffix: str = "") -> Iterator[Path]:
+    """Recorre los ficheros de la sección `name`, ordenados y sin duplicados.
+
+    Args:
+        cfg: Configuración del proyecto.
+        name: Sección de `acodo.toml` (`lint`, `todo`, `backup`...).
+        suffix: Si no está vacío, solo ficheros con esta extensión (`.py`).
+    """
+    exclude = cfg.scopes[name].exclude
+    seen: set[Path] = set()
+    for directory in cfg.scope_dirs(name):
+        for path in sorted(directory.rglob(f"*{suffix}")):
+            if path in seen or not path.is_file():
+                continue
+            if is_excluded(path.relative_to(cfg.root), exclude):
+                continue
+            seen.add(path)
+            yield path
+
+
+def find_pycache(cfg: AcodoConfig) -> list[Path]:
+    """Localiza los `__pycache__` de las rutas de `[all]`, respetando `exclude`."""
+    exclude = cfg.scopes["all"].exclude
     return [
         cache
-        for dir_name in dirs
-        for cache in sorted((root / dir_name).rglob("__pycache__"))
-        if cache.is_dir()
+        for directory in cfg.scope_dirs("all")
+        for cache in sorted(directory.rglob("__pycache__"))
+        if cache.is_dir() and not is_excluded(cache.relative_to(cfg.root), exclude)
     ]
-
-
-def discover_package_name(src: Path) -> str:
-    """Obtiene el nombre del único paquete Python situado en `src`."""
-    if not src.is_dir():
-        fail(f"No existe el directorio de código fuente: {src}")
-
-    packages = sorted(
-        path.name for path in src.iterdir() if (path / "__init__.py").is_file()
-    )
-
-    if len(packages) != 1:
-        found = ", ".join(packages) or "ninguno"
-        fail(f"Se esperaba exactamente un paquete en {src} (encontrados: {found}).")
-
-    return packages[0]
 
 
 # =============================================================================
@@ -113,9 +158,9 @@ def discover_package_name(src: Path) -> str:
 # =============================================================================
 
 
-def default_gh_config_file(root: Path) -> Path:
-    """Ruta por defecto de la configuración de la GitHub App."""
-    return root / ".local" / "gh_app.json"
+def gh_config_path(cfg: AcodoConfig) -> Path:
+    """Ruta del JSON de la GitHub App según `[github_app]` de `acodo.toml`."""
+    return cfg.root / cfg.gh_config_file
 
 
 def fail_gh(message: str) -> NoReturn:

@@ -1,66 +1,106 @@
 """Comprobaciones de calidad del proyecto.
 
-Ejecuta `ruff format`, `ruff check --fix`, `ty check` y `pytest` sin detenerse
-en el primer fallo, muestra un resumen final y sale con código 1 si alguna falla.
-
-Con `--ci` solo verifica (sin `--fix` ni reescribir ficheros) y con `--cov`
-mide la cobertura de pytest.
+Cada comprobación lee de `acodo.toml` las rutas de su sección (`[format]`,
+`[lint]`, `[types]` y `[test]`, sumadas a `[all]`). Las comprobaciones se
+ejecutan sin detenerse en el primer fallo, se muestra un resumen final y se
+sale con código 1 si alguna falla.
 
 Uso:
+    uv run acodo format
+    uv run acodo lint
+    uv run acodo types
+    uv run acodo tests
+    uv run acodo tests-cov
     uv run acodo check
-    uv run acodo check --lint --types
-    uv run acodo check --ci --cov
 """
 
 import sys
 import time
+from collections.abc import Callable, Sequence
 
 import typer
 from rich.table import Table
 
-from acodo_cli.commands_service import console, get_config, run
+from acodo_cli.commands_service import console, fail, get_config, run
 from acodo_cli.models import AcodoConfig, Step
-from acodo_cli.typer_options import (
-    CiOption,
-    CovOption,
-    FormatOption,
-    LintOption,
-    TestOption,
-    TypesOption,
-)
+
+PYTHON = (sys.executable, "-m")
 
 
-def _build_steps(cfg: AcodoConfig, *, ci: bool, cov: bool) -> dict[str, Step]:
-    """Comprobaciones disponibles, en el orden en que se ejecutan."""
-    python = (sys.executable, "-m")
-    format_args = ("--check",) if ci else ()
-    lint_args = () if ci else ("--fix",)
-    test_args = (f"--cov={cfg.src_dir}", "--cov-report=term-missing") if cov else ()
-    return {
-        "format": Step("ruff format", (*python, "ruff", "format", *format_args)),
-        "lint": Step("ruff check", (*python, "ruff", "check", *lint_args)),
-        "types": Step("ty check", (*python, "ty", "check")),
-        "tests": Step("pytest", (*python, "pytest", *test_args)),
-    }
+def _paths(cfg: AcodoConfig, section: str) -> list[str]:
+    """Rutas existentes de la sección, relativas a la raíz y con `/`."""
+    paths = [path.relative_to(cfg.root).as_posix() for path in cfg.scope_dirs(section)]
+    if not paths:
+        fail(f"No hay rutas que procesar: revisa `include` en [all] y [{section}].")
+    return paths
 
 
-def main(
-    format_: FormatOption = False,
-    lint: LintOption = False,
-    types: TypesOption = False,
-    tests: TestOption = False,
-    ci: CiOption = False,
-    cov: CovOption = False,
-) -> None:
-    """Ejecuta las comprobaciones de calidad; sin opciones, todas."""
+def _excludes(cfg: AcodoConfig, section: str) -> list[str]:
+    """Patrones `exclude` de la sección, sin la barra final."""
+    return [pattern.rstrip("/") for pattern in cfg.scopes[section].exclude]
+
+
+def _flags(option: str, values: Sequence[str]) -> list[str]:
+    """Repite `option` por cada valor: `--x a --x b`."""
+    return [arg for value in values for arg in (option, value)]
+
+
+def _format(cfg: AcodoConfig) -> Step:
+    excludes = _flags("--extend-exclude", _excludes(cfg, "format"))
+    command = (*PYTHON, "ruff", "format", *_paths(cfg, "format"), *excludes)
+    return Step("ruff format", command)
+
+
+def _lint(cfg: AcodoConfig) -> Step:
+    excludes = _flags("--extend-exclude", _excludes(cfg, "lint"))
+    command = (*PYTHON, "ruff", "check", "--fix", *_paths(cfg, "lint"), *excludes)
+    return Step("ruff check", command)
+
+
+def _types(cfg: AcodoConfig) -> Step:
+    excludes = _flags("--exclude", _excludes(cfg, "types"))
+    command = (*PYTHON, "ty", "check", *_paths(cfg, "types"), *excludes)
+    return Step("ty check", command)
+
+
+def _pytest_ignores(cfg: AcodoConfig) -> list[str]:
+    """`--ignore-glob` por cada patrón `exclude` (pytest compara rutas absolutas)."""
+    return [
+        f"--ignore-glob={glob}"
+        for pattern in _excludes(cfg, "test")
+        for glob in (f"*/{pattern}", f"*/{pattern}/*")
+    ]
+
+
+def _tests(cfg: AcodoConfig) -> Step:
+    command = (*PYTHON, "pytest", *_paths(cfg, "test"), *_pytest_ignores(cfg))
+    return Step("pytest", command)
+
+
+def _tests_cov(cfg: AcodoConfig) -> Step:
+    command = (*_tests(cfg).command, "--cov", "--cov-report=term-missing")
+    return Step("pytest (cobertura)", command)
+
+
+STEPS: dict[str, Callable[[AcodoConfig], Step]] = {
+    "format": _format,
+    "lint": _lint,
+    "types": _types,
+    "tests": _tests,
+}
+"""Comprobaciones de `check`, en el orden en que se ejecutan."""
+
+COVERAGE_STEPS: dict[str, Callable[[AcodoConfig], Step]] = {"tests-cov": _tests_cov}
+
+
+def run_steps(names: Sequence[str]) -> None:
+    """Ejecuta las comprobaciones `names`, imprime el resumen y sale con 1 si falla."""
+    available = {**STEPS, **COVERAGE_STEPS}
     cfg = get_config()
-    steps = _build_steps(cfg, ci=ci, cov=cov)
-    flags = {"format": format_, "lint": lint, "types": types, "tests": tests}
-    selected = [key for key, enabled in flags.items() if enabled] or list(steps)
+    steps = [available[name](cfg) for name in names]
 
     results: list[tuple[Step, int, float]] = []
-    for key in selected:
-        step = steps[key]
+    for step in steps:
         console.rule(f"[title]{step.name}[/]")
         start = time.perf_counter()
         code = run(step.command, cfg.root)
@@ -77,3 +117,8 @@ def main(
 
     if any(code != 0 for _, code, _ in results):
         raise typer.Exit(code=1)
+
+
+def main() -> None:
+    """Ejecuta todas las comprobaciones: format, lint, types y tests."""
+    run_steps(tuple(STEPS))

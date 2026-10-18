@@ -6,6 +6,12 @@ from acodo_cli.cli import app
 from acodo_cli.commands.todo import find_markers
 
 
+def write_acodo_toml(directory: Path, content: str) -> Path:
+    path = directory / "acodo.toml"
+    path.write_text(content, encoding="utf-8")
+    return path
+
+
 def test_find_markers_only_in_comments(tmp_path: Path) -> None:
     path = tmp_path / "m.py"
     path.write_text(
@@ -53,6 +59,18 @@ def test_marker_without_context_fails(project: Path, runner: CliRunner) -> None:
 
 
 def test_clean_project_reports_nothing(project: Path, runner: CliRunner) -> None:
+    result = runner.invoke(app, ["todo"])
+
+    assert result.exit_code == 0
+    assert "Sin marcadores" in result.output
+
+
+def test_section_exclude_skips_files(project: Path, runner: CliRunner) -> None:
+    (project / "src" / "pkg" / "main.py").write_text("# TODO\n", encoding="utf-8")
+    write_acodo_toml(
+        project, '[all]\ninclude = ["src/"]\n[todo]\nexclude = ["main.py"]\n'
+    )
+
     result = runner.invoke(app, ["todo"])
 
     assert result.exit_code == 0

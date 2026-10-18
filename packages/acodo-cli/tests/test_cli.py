@@ -4,6 +4,7 @@ from importlib.metadata import entry_points
 from pathlib import Path
 
 import pytest
+import typer
 from typer.testing import CliRunner
 
 from acodo_cli import cli
@@ -13,15 +14,19 @@ from acodo_cli.commands_service import is_global_install
 COMMANDS = (
     "api",
     "backup",
-    "build",
     "check",
     "clean",
     "code-count",
     "doctor",
+    "format",
     "gh-check",
     "gh-token",
     "init",
+    "lint",
+    "tests",
+    "tests-cov",
     "todo",
+    "types",
 )
 
 
@@ -33,9 +38,38 @@ def test_help_lists_every_command(runner: CliRunner) -> None:
         assert command in result.output
 
 
-def test_no_args_shows_help(runner: CliRunner) -> None:
+def test_build_command_is_gone(runner: CliRunner) -> None:
+    assert runner.invoke(app, ["build"]).exit_code == 2
+
+
+@pytest.mark.parametrize("command", COMMANDS)
+def test_commands_take_no_arguments(runner: CliRunner, command: str) -> None:
+    result = runner.invoke(app, [command, "--no-existe"])
+
+    assert result.exit_code == 2
+
+
+def test_no_args_shows_help_in_a_project(project: Path, runner: CliRunner) -> None:
     result = runner.invoke(app, [])
 
+    assert result.exit_code == 0
+    assert "backup" in result.output
+
+
+def test_no_args_offers_to_initialize(bare_dir: Path, runner: CliRunner) -> None:
+    result = runner.invoke(app, [], input="y\n")
+
+    assert result.exit_code == 0
+    assert (bare_dir / "acodo.toml").is_file()
+
+
+def test_no_args_without_initializing_shows_help(
+    bare_dir: Path, runner: CliRunner
+) -> None:
+    result = runner.invoke(app, [], input="n\n")
+
+    assert result.exit_code == 0
+    assert not (bare_dir / "acodo.toml").exists()
     assert "backup" in result.output
 
 
@@ -73,7 +107,7 @@ def test_commands_fail_outside_a_project(
     result = runner.invoke(app, ["code-count"])
 
     assert result.exit_code == 1
-    assert "pyproject.toml" in result.output
+    assert "acodo.toml" in result.output
 
 
 def test_console_script_points_to_the_app() -> None:
@@ -82,23 +116,41 @@ def test_console_script_points_to_the_app() -> None:
     assert scripts["acodo"] == "acodo_cli.cli:app"
 
 
-def test_global_install_is_rejected(
+def global_app(monkeypatch: pytest.MonkeyPatch) -> typer.Typer:
+    monkeypatch.setattr(cli, "is_global_install", lambda prefix, base_prefix: True)
+    return cli.build_app()
+
+
+def test_global_install_only_exposes_init(
     runner: CliRunner, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(cli, "is_global_install", lambda prefix, base_prefix: True)
+    app = global_app(monkeypatch)
 
-    result = runner.invoke(app, ["code-count"])
+    result = runner.invoke(app, ["--help"])
 
-    assert result.exit_code == 1
-    assert "herramienta global" in result.output
+    assert result.exit_code == 0
+    assert "init" in result.output
+    assert "backup" not in result.output
+    assert "--version" in result.output
 
 
-def test_help_still_works_in_global_install(
+def test_global_install_rejects_other_commands(
     runner: CliRunner, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(cli, "is_global_install", lambda prefix, base_prefix: True)
+    app = global_app(monkeypatch)
 
-    assert runner.invoke(app, ["--help"]).exit_code == 0
+    assert runner.invoke(app, ["code-count"]).exit_code == 2
+
+
+def test_global_install_does_not_offer_to_initialize(
+    bare_dir: Path, runner: CliRunner, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    app = global_app(monkeypatch)
+
+    result = runner.invoke(app, [])
+
+    assert result.exit_code == 0
+    assert not (bare_dir / "acodo.toml").exists()
 
 
 def test_is_global_install_without_virtualenv(tmp_path: Path) -> None:
@@ -126,12 +178,10 @@ def test_is_global_install_accepts_project_virtualenv(tmp_path: Path) -> None:
 def test_config_errors_keep_square_brackets(
     runner: CliRunner, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    (tmp_path / "pyproject.toml").write_text(
-        "[tool.acodo-cli]\nsrc-dir = 3\n", encoding="utf-8"
-    )
+    (tmp_path / "acodo.toml").write_text("[all]\ninclude = 3\n", encoding="utf-8")
     monkeypatch.chdir(tmp_path)
 
     result = runner.invoke(app, ["code-count"])
 
     assert result.exit_code == 1
-    assert "[tool.acodo-cli] «src-dir» debe ser una cadena no vacía" in result.output
+    assert "[all] «include» debe ser una lista de cadenas no vacías" in result.output

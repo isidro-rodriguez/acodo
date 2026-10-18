@@ -1,7 +1,5 @@
-import json
 from pathlib import Path
 
-import pytest
 from typer.testing import CliRunner
 
 from acodo_cli.cli import app
@@ -98,55 +96,51 @@ def test_count_file_lines_ignores_comments_and_blanks(tmp_path: Path) -> None:
 
 
 def test_command_prints_summary(project: Path, runner: CliRunner) -> None:
-    result = runner.invoke(app, ["code-count"])
+    result = runner.invoke(app, ["code-count"], input="n\n")
 
     assert result.exit_code == 0
     assert "Resumen por directorio" in result.output
     assert "2 ficheros procesados" in result.output
+    assert "src/" in result.output
+    assert "main.py" not in result.output
 
 
-def test_command_verbose_lists_files(project: Path, runner: CliRunner) -> None:
-    result = runner.invoke(app, ["code-count", "-v"])
+def test_command_lists_files_when_asked(project: Path, runner: CliRunner) -> None:
+    result = runner.invoke(app, ["code-count"], input="y\n")
 
     assert result.exit_code == 0
     assert "main.py" in result.output
 
 
-def test_command_tree(project: Path, runner: CliRunner) -> None:
-    result = runner.invoke(app, ["code-count", "--tree", "--verbose"])
+def test_command_does_not_ask_without_files(project: Path, runner: CliRunner) -> None:
+    for path in (project / "src").rglob("*.py"):
+        path.unlink()
+
+    result = runner.invoke(app, ["code-count"])
 
     assert result.exit_code == 0
-    assert "code_count" in result.output
-    assert "main.py" in result.output
+    assert "0 ficheros procesados" in result.output
 
 
-def test_command_json(project: Path, runner: CliRunner) -> None:
-    result = runner.invoke(app, ["code-count", "--json", "--tree"])
-
-    assert result.exit_code == 0
-    data = json.loads(result.output)
-    src = next(c for c in data["categories"] if c["name"] == "src")
-    assert {f["path"] for f in src["files"]} == {
-        "src/pkg/__init__.py",
-        "src/pkg/main.py",
-    }
-    assert data["total"]["files"] == 2
-    assert data["total"]["total"] == data["total"]["code"] + data["total"]["docstrings"]
-
-
-def test_workspace_layout_does_not_count_files_twice(
-    runner: CliRunner, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+def test_workspace_layout_counts_each_file_once(
+    project: Path, runner: CliRunner
 ) -> None:
-    (tmp_path / "pyproject.toml").write_text(
-        '[tool.acodo-cli]\nsrc-dir = "packages"\ntest-dir = "packages"\n',
-        encoding="utf-8",
+    (project / "packages").mkdir()
+    (project / "packages" / "a.py").write_text("x = 1\n", encoding="utf-8")
+    (project / "acodo.toml").write_text(
+        '[all]\ninclude = ["packages/"]\n', encoding="utf-8"
     )
-    (tmp_path / "packages").mkdir()
-    (tmp_path / "packages" / "a.py").write_text("x = 1\n", encoding="utf-8")
-    monkeypatch.chdir(tmp_path)
 
-    result = runner.invoke(app, ["code-count", "--json"])
+    result = runner.invoke(app, ["code-count"], input="n\n")
 
-    data = json.loads(result.output)
-    assert data["total"]["files"] == 1
-    assert [c["name"] for c in data["categories"]] == ["scripts", "src"]
+    assert "1 ficheros procesados" in result.output
+
+
+def test_exclude_skips_files(project: Path, runner: CliRunner) -> None:
+    (project / "acodo.toml").write_text(
+        '[all]\ninclude = ["src/"]\nexclude = ["main.py"]\n', encoding="utf-8"
+    )
+
+    result = runner.invoke(app, ["code-count"], input="n\n")
+
+    assert "1 ficheros procesados" in result.output

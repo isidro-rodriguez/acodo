@@ -9,32 +9,65 @@ from typing import Self
 
 
 @dataclass(frozen=True, slots=True)
+class Scope:
+    """Rutas que un comando incluye y excluye, tal como se leen de `acodo.toml`.
+
+    Attributes:
+        include: Rutas a procesar, relativas a la raíz del proyecto.
+        exclude: Rutas o patrones a omitir, relativos a la raíz del proyecto.
+    """
+
+    include: tuple[str, ...] = ()
+    exclude: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class OutputConfig:
+    """Destino de un fichero generado (`[backup]` y `[api]`).
+
+    Attributes:
+        target: Ruta del fichero de salida, relativa a la raíz del proyecto.
+        version_suffix: Si es `True`, añade la versión del proyecto al nombre.
+    """
+
+    target: str
+    version_suffix: bool
+
+
+@dataclass(frozen=True, slots=True)
 class AcodoConfig:
     """Configuración del proyecto sobre el que se ejecuta `acodo-cli`.
 
+    Se lee de `acodo.toml`; el nombre, la versión y `requires-python` salen del
+    `[project]` del `pyproject.toml` contiguo, si existe.
+
     Attributes:
-        root: Directorio que contiene el `pyproject.toml` del proyecto.
+        root: Directorio que contiene el `acodo.toml` del proyecto.
         project_name: Nombre del proyecto (`[project].name` o el del directorio).
-        src_dir: Directorio del código fuente, relativo a `root`.
-        test_dir: Directorio de tests, relativo a `root`.
-        python_version: Versión de Python esperada (especificador PEP 440).
+        version: Versión del proyecto (`[project].version`), vacía si no consta.
+        requires_python: Especificador PEP 440 de `[project].requires-python`.
+        scopes: Alcance efectivo (`[all]` más la sección) de cada comando.
+        backup: Destino de la copia de seguridad.
+        api: Destino de la documentación de la API.
+        gh_config_file: Ruta del JSON de la GitHub App, relativa a `root`.
     """
 
     root: Path
     project_name: str
-    src_dir: str
-    test_dir: str
-    python_version: str
+    version: str
+    requires_python: str
+    scopes: dict[str, Scope]
+    backup: OutputConfig
+    api: OutputConfig
+    gh_config_file: str
 
-    @property
-    def src(self) -> Path:
-        """Ruta absoluta del directorio de código fuente."""
-        return self.root / self.src_dir
-
-    @property
-    def tests(self) -> Path:
-        """Ruta absoluta del directorio de tests."""
-        return self.root / self.test_dir
+    def scope_dirs(self, name: str) -> list[Path]:
+        """Directorios existentes del `include` de la sección `name`."""
+        return [
+            path
+            for entry in self.scopes[name].include
+            if (path := self.root / entry).is_dir()
+        ]
 
 
 @dataclass(frozen=True, slots=True)

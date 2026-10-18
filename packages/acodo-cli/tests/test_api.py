@@ -1,80 +1,114 @@
 from pathlib import Path
 
-import pytest
 from typer.testing import CliRunner
 
 from acodo_cli.cli import app
-from acodo_cli.commands import api
+from acodo_cli.commands.api import render_module
+
+SOURCE = '''"""Módulo de ejemplo."""
 
 
-class FakeRun:
-    def __init__(self) -> None:
-        self.calls: list[tuple[str, ...]] = []
-        self.code = 0
-
-    def __call__(self, command: list[str], cwd: Path) -> int:
-        self.calls.append(tuple(command))
-        return self.code
+def public(a: int, *, b: str = "x") -> bool:
+    """Hace algo público."""
+    return True
 
 
-@pytest.fixture
-def fake_run(project: Path, monkeypatch: pytest.MonkeyPatch) -> FakeRun:
-    fake = FakeRun()
-    monkeypatch.setattr(api, "run", fake)
-    monkeypatch.setattr(api.shutil, "which", lambda _name: "uv")
-    return fake
+def undocumented() -> None:
+    pass
 
 
-def test_defaults_to_the_discovered_package(
-    fake_run: FakeRun, project: Path, runner: CliRunner
-) -> None:
+def _private() -> None:
+    """Privada: no aparece."""
+
+
+class Shape(Base):
+    """Una figura."""
+
+    def area(self) -> float:
+        """Calcula el área."""
+        return 0.0
+
+    def _hidden(self) -> None:
+        """No aparece."""
+'''
+
+
+def write_acodo_toml(directory: Path, content: str) -> Path:
+    path = directory / "acodo.toml"
+    path.write_text(content, encoding="utf-8")
+    return path
+
+
+def test_render_module_documents_public_items_with_docstring() -> None:
+    text = render_module(SOURCE, "pkg/mod.py")
+
+    assert "## `pkg/mod.py`" in text
+    assert "Módulo de ejemplo." in text
+    assert "def public(a: int, *, b: str='x') -> bool" in text
+    assert "class Shape(Base)" in text
+    assert "def area(self) -> float" in text
+    assert "undocumented" not in text
+    assert "_private" not in text
+    assert "_hidden" not in text
+
+
+def test_render_module_is_empty_without_docs_or_on_syntax_error() -> None:
+    assert render_module("x = 1\n", "a.py") == ""
+    assert render_module("def f(:\n", "a.py") == ""
+
+
+def test_command_writes_the_target(project: Path, runner: CliRunner) -> None:
+    (project / "src" / "pkg" / "mod.py").write_text(SOURCE, encoding="utf-8")
+
     result = runner.invoke(app, ["api"])
 
     assert result.exit_code == 0
-    (command,) = fake_run.calls
-    assert command[-1] == str(project.resolve() / "src" / "pkg")
-    assert command[:7] == ("uv", "run", "--with", "pdoc", "pdoc", "-d", "google")
-    assert "-o" not in command
+    text = (project / ".local" / "api.md").read_text(encoding="utf-8")
+    assert text.startswith("# API de demo")
+    assert "src/pkg/mod.py" in text
+    assert "src/pkg/__init__.py" in text  # Su docstring de módulo es público.
+    assert "main.py" not in text  # Sin docstring: no hay nada que documentar.
 
 
-def test_accepts_custom_path_and_output(
-    fake_run: FakeRun, project: Path, runner: CliRunner
+def test_command_adds_the_version_to_the_file_name(
+    project: Path, runner: CliRunner
 ) -> None:
-    module = project / "mod.py"
-    module.write_text("")
-    output = project / "docs"
-
-    result = runner.invoke(app, ["api", "-p", str(module), "-o", str(output)])
-
-    assert result.exit_code == 0
-    (command,) = fake_run.calls
-    assert command[-1] == str(module.resolve())
-    assert command[command.index("-o") + 1] == str(output.resolve())
-
-
-def test_propagates_pdoc_failure(
-    fake_run: FakeRun, project: Path, runner: CliRunner
-) -> None:
-    fake_run.code = 3
+    (project / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\nversion = "1.2.0"\n', encoding="utf-8"
+    )
 
     result = runner.invoke(app, ["api"])
 
-    assert result.exit_code == 3
+    assert result.exit_code == 0
+    assert (project / ".local" / "api-1.2.0.md").is_file()
 
 
-def test_requires_uv(
-    fake_run: FakeRun, runner: CliRunner, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setattr(api.shutil, "which", lambda _name: None)
+def test_command_honors_section_exclude(project: Path, runner: CliRunner) -> None:
+    (project / "src" / "pkg" / "mod.py").write_text(SOURCE, encoding="utf-8")
+    write_acodo_toml(
+        project, '[all]\ninclude = ["src/"]\n[api]\nexclude = ["__init__.py"]\n'
+    )
+
+    runner.invoke(app, ["api"])
+
+    generated = (project / ".local" / "api.md").read_text(encoding="utf-8")
+    assert "mod.py" in generated
+    assert "__init__.py" not in generated
+
+
+def test_unsupported_format_fails(project: Path, runner: CliRunner) -> None:
+    write_acodo_toml(project, '[api]\ntarget = "api.html"\n')
 
     result = runner.invoke(app, ["api"])
 
     assert result.exit_code == 1
-    assert fake_run.calls == []
-    assert "uv" in result.output
+    assert ".md" in result.output
 
 
-def test_rejects_missing_path(fake_run: FakeRun, runner: CliRunner) -> None:
-    result = runner.invoke(app, ["api", "-p", "no_existe"])
+def test_nothing_to_document_fails(project: Path, runner: CliRunner) -> None:
+    (project / "src" / "pkg" / "__init__.py").write_text("", encoding="utf-8")
 
-    assert result.exit_code == 2
+    result = runner.invoke(app, ["api"])
+
+    assert result.exit_code == 1
+    assert "nada que documentar" in result.output

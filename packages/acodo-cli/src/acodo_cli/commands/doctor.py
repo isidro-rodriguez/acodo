@@ -1,9 +1,9 @@
 """Diagnóstico del entorno y de la configuración del proyecto.
 
-Comprueba lo imprescindible (versión de Python, ruff, ty, pytest, directorios
-de código y tests) y avisa de lo opcional (uv, pytest-cov, PyInstaller,
-`.local/` en `.gitignore`, configuración de la GitHub App). Sale con código 1
-si falla algo imprescindible.
+Comprueba lo imprescindible (versión de Python, ruff, ty, pytest y las rutas de
+`[all]` en `acodo.toml`) y avisa de lo opcional (pytest-cov, `.local/` en
+`.gitignore`, configuración de la GitHub App). Sale con código 1 si falla algo
+imprescindible.
 
 Uso:
     uv run acodo doctor
@@ -11,14 +11,13 @@ Uso:
 
 import importlib.util
 import re
-import shutil
 import sys
 from pathlib import Path
 
 import typer
 from rich.table import Table
 
-from acodo_cli.commands_service import console, default_gh_config_file, get_config
+from acodo_cli.commands_service import console, get_config, gh_config_path
 from acodo_cli.models import AcodoConfig, DoctorResult, Status
 
 _CLAUSE_RE = re.compile(r"\s*(>=|<=|==|!=|>|<)\s*(\d+(?:\.\d+)*)\s*$")
@@ -72,17 +71,20 @@ def _has_module(name: str) -> bool:
 
 
 def _check_python(cfg: AcodoConfig) -> DoctorResult:
+    spec = cfg.requires_python
+    if not spec:
+        return DoctorResult(
+            "Python", Status.WARN, "Sin requires-python en pyproject.toml"
+        )
     version = sys.version_info[:3]
     shown = ".".join(str(n) for n in version)
-    result = satisfies(version, cfg.python_version)
+    result = satisfies(version, spec)
     if result is None:
         return DoctorResult(
-            "Python",
-            Status.FAIL,
-            f"No se entiende python-version: {cfg.python_version}",
+            "Python", Status.FAIL, f"No se entiende requires-python: {spec}"
         )
     status = Status.OK if result else Status.FAIL
-    return DoctorResult("Python", status, f"{shown} (se espera {cfg.python_version})")
+    return DoctorResult("Python", status, f"{shown} (se espera {spec})")
 
 
 def _check_module(name: str, label: str, *, required: bool, hint: str) -> DoctorResult:
@@ -98,12 +100,6 @@ def _check_dir(label: str, path: Path, root: Path) -> DoctorResult:
     return DoctorResult(label, Status.FAIL, f"No existe {relative}")
 
 
-def _check_uv() -> DoctorResult:
-    if shutil.which("uv"):
-        return DoctorResult("uv", Status.OK)
-    return DoctorResult("uv", Status.WARN, "Necesario para `acodo api`")
-
-
 def _check_gitignore(root: Path) -> DoctorResult:
     gitignore = root / ".gitignore"
     lines = (
@@ -116,15 +112,22 @@ def _check_gitignore(root: Path) -> DoctorResult:
     )
 
 
-def _check_gh_config(root: Path) -> DoctorResult:
-    path = default_gh_config_file(root)
+def _check_gh_config(cfg: AcodoConfig) -> DoctorResult:
+    path = gh_config_path(cfg)
     if path.is_file():
         return DoctorResult(
-            "Config GitHub App", Status.OK, path.relative_to(root).as_posix()
+            "Config GitHub App", Status.OK, path.relative_to(cfg.root).as_posix()
         )
     return DoctorResult(
         "Config GitHub App", Status.WARN, "Solo si usas gh-token/gh-check"
     )
+
+
+def _check_include_dirs(cfg: AcodoConfig) -> list[DoctorResult]:
+    entries = cfg.scopes["all"].include
+    if not entries:
+        return [DoctorResult("Rutas", Status.FAIL, "[all] no tiene `include`")]
+    return [_check_dir("Ruta", cfg.root / entry, cfg.root) for entry in entries]
 
 
 def run_checks(cfg: AcodoConfig) -> list[DoctorResult]:
@@ -136,23 +139,15 @@ def run_checks(cfg: AcodoConfig) -> list[DoctorResult]:
         _check_module(
             "pytest", "pytest", required=True, hint="Falta: uv add --dev pytest"
         ),
-        _check_dir("Código fuente", cfg.src, cfg.root),
-        _check_dir("Tests", cfg.tests, cfg.root),
-        _check_uv(),
+        *_check_include_dirs(cfg),
         _check_module(
             "pytest_cov",
             "pytest-cov",
             required=False,
-            hint="Necesario para `check --cov`",
-        ),
-        _check_module(
-            "PyInstaller",
-            "PyInstaller",
-            required=False,
-            hint="Necesario para `acodo build`",
+            hint="Necesario para `acodo tests-cov`",
         ),
         _check_gitignore(cfg.root),
-        _check_gh_config(cfg.root),
+        _check_gh_config(cfg),
     ]
 
 

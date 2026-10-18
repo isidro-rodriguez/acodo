@@ -1,4 +1,4 @@
-"""CLI de desarrollo para proyectos Python (calidad, copias, compilado y GitHub App)."""
+"""CLI de desarrollo para proyectos Python (calidad, copias, API y GitHub App)."""
 
 from importlib.metadata import version
 

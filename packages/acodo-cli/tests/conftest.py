@@ -4,6 +4,7 @@ import pytest
 from typer.testing import CliRunner
 
 from acodo_cli.commands_service import console, err_console
+from acodo_cli.config import default_acodo_toml
 
 
 @pytest.fixture(autouse=True)
@@ -20,14 +21,21 @@ def runner() -> CliRunner:
 
 
 @pytest.fixture
-def project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """Proyecto mínimo en un directorio temporal, que pasa a ser el actual."""
-    (tmp_path / "pyproject.toml").write_text(
-        '[project]\nname = "demo"\n', encoding="utf-8"
+def bare_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Directorio vacío, sin `acodo.toml`, que pasa a ser el actual."""
+    monkeypatch.chdir(tmp_path)
+    return tmp_path
+
+
+@pytest.fixture
+def project(bare_dir: Path) -> Path:
+    """Proyecto mínimo con el `acodo.toml` por defecto, que pasa a ser el actual."""
+    (bare_dir / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\nrequires-python = ">=3.13"\n', encoding="utf-8"
     )
-    package = tmp_path / "src" / "pkg"
+    (bare_dir / "acodo.toml").write_text(default_acodo_toml(), encoding="utf-8")
+    package = bare_dir / "src" / "pkg"
     package.mkdir(parents=True)
     (package / "__init__.py").write_text('"""Paquete."""\n', encoding="utf-8")
     (package / "main.py").write_text("x = 1\n", encoding="utf-8")
-    monkeypatch.chdir(tmp_path)
-    return tmp_path
+    return bare_dir

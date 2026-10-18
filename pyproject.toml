@@ -97,12 +97,3 @@ exclude_also = [
     "if TYPE_CHECKING:",
     "if __name__ == .__main__.:",
 ]
-
-
-# -----------------------------------------------------------------------------
-# acodo-cli: el propio workspace es el "proyecto" sobre el que se ejecuta
-# -----------------------------------------------------------------------------
-[tool.acodo-cli]
-src-dir = "packages"
-test-dir = "packages"
-python-version = ">=3.13"

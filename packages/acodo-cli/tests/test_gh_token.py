@@ -32,6 +32,7 @@ def fake_token(monkeypatch: pytest.MonkeyPatch) -> None:
         return {"token": "ghs_abc", "expires_at": "2030-01-01T00:00:00Z"}
 
     monkeypatch.setattr(gh_token, "generate_token", generate)
+    monkeypatch.setattr(gh_token, "_copy_to_clipboard", lambda text: None)
 
 
 # ---------------------------------------------------------------------------
@@ -51,16 +52,8 @@ def test_missing_default_config_shows_template(
 
 
 @pytest.mark.usefixtures("config_file", "fake_token")
-def test_only_token_prints_just_the_token(runner: CliRunner) -> None:
-    result = runner.invoke(app, ["gh-token", "--only-token", "--no-clipboard"])
-
-    assert result.exit_code == 0
-    assert result.output.strip() == "ghs_abc"
-
-
-@pytest.mark.usefixtures("config_file", "fake_token")
-def test_full_output_includes_normalized_repository(runner: CliRunner) -> None:
-    result = runner.invoke(app, ["gh-token", "--no-clipboard"])
+def test_output_includes_normalized_repository(runner: CliRunner) -> None:
+    result = runner.invoke(app, ["gh-token"])
 
     assert result.exit_code == 0
     assert '"repository": "owner/repo"' in result.output
@@ -68,11 +61,17 @@ def test_full_output_includes_normalized_repository(runner: CliRunner) -> None:
 
 
 @pytest.mark.usefixtures("config_file", "fake_token")
-def test_no_print_hides_the_output(runner: CliRunner) -> None:
-    result = runner.invoke(app, ["gh-token", "--no-print", "--no-clipboard"])
+def test_output_is_copied_to_the_clipboard(
+    runner: CliRunner, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    copied: list[str] = []
+    monkeypatch.setattr(gh_token, "_copy_to_clipboard", copied.append)
+
+    result = runner.invoke(app, ["gh-token"])
 
     assert result.exit_code == 0
-    assert "ghs_abc" not in result.output
+    assert '"token": "ghs_abc"' in copied[0]
+    assert "Copiado al portapapeles" in result.output
 
 
 @pytest.mark.usefixtures("config_file", "fake_token")
@@ -84,21 +83,25 @@ def test_clipboard_failure_is_only_a_warning(
 
     monkeypatch.setattr(gh_token, "_copy_to_clipboard", broken)
 
-    result = runner.invoke(app, ["gh-token", "--only-token"])
+    result = runner.invoke(app, ["gh-token"])
 
     assert result.exit_code == 0
     assert "sin portapapeles" in result.output
 
 
-def test_custom_file_option(project: Path, fake_token: None, runner: CliRunner) -> None:
+def test_config_file_comes_from_acodo_toml(
+    project: Path, fake_token: None, runner: CliRunner
+) -> None:
     other = project / "otro.json"
     other.write_text(json.dumps(VALID_CONFIG), encoding="utf-8")
-
-    result = runner.invoke(
-        app, ["gh-token", "-f", str(other), "--only-token", "--no-clipboard"]
+    (project / "acodo.toml").write_text(
+        '[github_app]\nconfig_file = "otro.json"\n', encoding="utf-8"
     )
 
+    result = runner.invoke(app, ["gh-token"])
+
     assert result.exit_code == 0
+    assert '"token": "ghs_abc"' in result.output
 
 
 @pytest.mark.usefixtures("config_file")
@@ -110,7 +113,7 @@ def test_generation_error_exits_with_one(
 
     monkeypatch.setattr(gh_token, "generate_token", broken)
 
-    result = runner.invoke(app, ["gh-token", "--no-clipboard"])
+    result = runner.invoke(app, ["gh-token"])
 
     assert result.exit_code == 1
     assert "401" in result.output

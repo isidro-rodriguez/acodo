@@ -1,7 +1,7 @@
 """Lista los comentarios TODO, FIXME, XXX y HACK del proyecto.
 
-Solo mira comentarios reales de ficheros `.py` (no cadenas). Sale con código 1
-si algún marcador no tiene texto de contexto.
+Solo mira comentarios reales de ficheros `.py` (no cadenas) de las rutas de
+`[todo]` y `[all]`. Sale con código 1 si algún marcador no tiene texto de contexto.
 
 Uso:
     uv run acodo todo
@@ -15,7 +15,7 @@ from pathlib import Path
 import typer
 from rich.table import Table
 
-from acodo_cli.commands_service import console, get_config
+from acodo_cli.commands_service import console, get_config, scope_files
 
 MARKER_RE = re.compile(r"\b(TODO|FIXME|XXX|HACK)\b[:\s(]*(.*)")
 
@@ -41,13 +41,10 @@ def find_markers(path: Path) -> list[tuple[int, str, str]]:
 def main() -> None:
     """Muestra los marcadores pendientes del código."""
     cfg = get_config()
-    bases = [cfg.src, cfg.tests, cfg.root / "scripts"]
 
     rows = [
         (path.relative_to(cfg.root).as_posix(), line, marker, text)
-        for base in bases
-        if base.is_dir()
-        for path in sorted(base.rglob("*.py"))
+        for path in scope_files(cfg, "todo", ".py")
         for line, marker, text in find_markers(path)
     ]
 

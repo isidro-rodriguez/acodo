@@ -1,12 +1,11 @@
 """Obtiene un token de instalación para una GitHub App.
 
-Genera el token (por stdout y portapapeles) a partir de un JSON de
-configuración. Para comprobar el acceso al repositorio, véase `gh-check`.
+Genera el token (por stdout y portapapeles) a partir del JSON indicado en
+`[github_app]` de `acodo.toml`. Para comprobar el acceso al repositorio,
+véase `gh-check`.
 
 Uso:
     uv run acodo gh-token
-    uv run acodo gh-token --only-token --no-clipboard
-    uv run acodo gh-token -f .local/otro.json
 
 Configuración (JSON):
     {
@@ -18,8 +17,7 @@ Configuración (JSON):
     }
 
     `private-key` admite ruta relativa al propio JSON, ruta absoluta
-    o el contenido PEM embebido. Por defecto se lee
-    `.local/gh_app.json` relativo a la raíz del proyecto.
+    o el contenido PEM embebido.
 """
 
 import json
@@ -33,18 +31,12 @@ from rich.markup import escape
 from acodo.utils import get_env
 from acodo_cli.commands_service import (
     console,
-    default_gh_config_file,
     err_console,
     generate_token,
     get_config,
+    gh_config_path,
     load_gh_config,
     normalize_repo,
-)
-from acodo_cli.typer_options import (
-    GhConfigFileOption,
-    NoClipboardOption,
-    NoPrintOption,
-    OnlyTokenOption,
 )
 
 # =============================================================================
@@ -132,14 +124,9 @@ def _copy_to_clipboard(text: str) -> None:
         _copy_posix(text)
 
 
-def main(
-    file: GhConfigFileOption = None,
-    only_token: OnlyTokenOption = False,
-    no_clipboard: NoClipboardOption = False,
-    no_print: NoPrintOption = False,
-) -> None:
-    """Genera un token de instalación para la GitHub App."""
-    file = file or default_gh_config_file(get_config().root)
+def main() -> None:
+    """Genera un token de instalación, lo imprime y lo copia al portapapeles."""
+    file = gh_config_path(get_config())
     cfg = load_gh_config(file)
 
     try:
@@ -150,19 +137,11 @@ def main(
         raise typer.Exit(code=1) from None
 
     # El JSON de salida incluye el repositorio de destino.
-    output_data = {"repository": repo_slug, **body}
-    output = (
-        body["token"]
-        if only_token
-        else json.dumps(output_data, indent=2, ensure_ascii=False)
-    )
+    output = json.dumps({"repository": repo_slug, **body}, indent=2, ensure_ascii=False)
+    console.print(output, markup=False)
 
-    if not no_print:
-        console.print(output, markup=False)
-
-    if not no_clipboard:
-        try:
-            _copy_to_clipboard(output)
-            err_console.print("[ok]✓[/] Copiado al portapapeles.")
-        except RuntimeError as exc:
-            err_console.print(f"[warning]Aviso:[/] {exc}")
+    try:
+        _copy_to_clipboard(output)
+        err_console.print("[ok]✓[/] Copiado al portapapeles.")
+    except RuntimeError as exc:
+        err_console.print(f"[warning]Aviso:[/] {exc}")

@@ -7,10 +7,14 @@ from acodo_cli.cli import app
 from acodo_cli.commands import doctor
 
 
+def make_dirs(project: Path) -> None:
+    for name in ("scripts", "tests"):
+        (project / name).mkdir()
+
+
 @pytest.fixture
 def all_tools(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(doctor, "_has_module", lambda name: True)
-    monkeypatch.setattr(doctor.shutil, "which", lambda name: "/usr/bin/uv")
 
 
 @pytest.mark.parametrize(
@@ -31,7 +35,7 @@ def test_satisfies(version: tuple[int, ...], spec: str, expected: bool | None) -
 
 
 def test_everything_ready(project: Path, all_tools: None, runner: CliRunner) -> None:
-    (project / "tests").mkdir()
+    make_dirs(project)
     (project / ".gitignore").write_text(".local/\n", encoding="utf-8")
 
     result = runner.invoke(app, ["doctor"])
@@ -45,7 +49,7 @@ def test_missing_required_module_fails(
     project: Path, monkeypatch: pytest.MonkeyPatch, runner: CliRunner
 ) -> None:
     monkeypatch.setattr(doctor, "_has_module", lambda name: name != "ty")
-    (project / "tests").mkdir()
+    make_dirs(project)
 
     result = runner.invoke(app, ["doctor"])
 
@@ -53,13 +57,14 @@ def test_missing_required_module_fails(
     assert "uv add --dev ty" in result.output
 
 
-def test_missing_tests_dir_fails(
+def test_missing_include_dir_fails(
     project: Path, all_tools: None, runner: CliRunner
 ) -> None:
     result = runner.invoke(app, ["doctor"])
 
     assert result.exit_code == 1
     assert "No existe tests" in result.output
+    assert "No existe scripts" in result.output
 
 
 def test_optional_problems_only_warn(
@@ -68,8 +73,7 @@ def test_optional_problems_only_warn(
     monkeypatch.setattr(
         doctor, "_has_module", lambda name: name in {"ruff", "ty", "pytest"}
     )
-    monkeypatch.setattr(doctor.shutil, "which", lambda name: None)
-    (project / "tests").mkdir()
+    make_dirs(project)
 
     result = runner.invoke(app, ["doctor"])
 
@@ -77,15 +81,27 @@ def test_optional_problems_only_warn(
     assert "aviso" in result.output
 
 
-def test_unreadable_python_version_fails(
+def test_unreadable_requires_python_fails(
     project: Path, all_tools: None, runner: CliRunner
 ) -> None:
-    (project / "tests").mkdir()
+    make_dirs(project)
     (project / "pyproject.toml").write_text(
-        '[tool.acodo-cli]\npython-version = "3.13"\n', encoding="utf-8"
+        '[project]\nname = "demo"\nrequires-python = "3.13"\n', encoding="utf-8"
     )
 
     result = runner.invoke(app, ["doctor"])
 
     assert result.exit_code == 1
     assert "No se entiende" in result.output
+
+
+def test_missing_requires_python_only_warns(
+    project: Path, all_tools: None, runner: CliRunner
+) -> None:
+    make_dirs(project)
+    (project / "pyproject.toml").write_text('[project]\nname = "demo"\n', "utf-8")
+
+    result = runner.invoke(app, ["doctor"])
+
+    assert result.exit_code == 0
+    assert "Sin requires-python" in result.output

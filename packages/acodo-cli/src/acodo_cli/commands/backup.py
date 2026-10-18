@@ -1,12 +1,11 @@
 """Copia de seguridad manual.
 
-Limpia cachés `__pycache__` y comprime el código fuente en
-`.local/backup.<extensión>` (zip por defecto; también tar.gz).
+Limpia las cachés `__pycache__` y comprime los ficheros de las rutas de
+`[backup]` y `[all]` (más los de configuración de la raíz) en el `target` de
+`[backup]` de `acodo.toml`. El formato (zip o tar.gz) sale de su extensión.
 
 Uso:
     uv run acodo backup
-    uv run acodo backup --archiver tar.gz
-    uv run acodo backup -f ~/copias/proyecto.zip
 """
 
 import shutil
@@ -17,12 +16,15 @@ from pathlib import Path
 from rich.table import Table
 
 from acodo.utils import parse_size
-from acodo_cli.commands_service import console, fail, find_pycache, get_config
+from acodo_cli.commands_service import (
+    console,
+    fail,
+    find_pycache,
+    get_config,
+    output_path,
+    scope_files,
+)
 from acodo_cli.models import AcodoConfig, Archiver
-from acodo_cli.typer_options import ArchiverOption, BackupFileOption
-
-BACKUP_DIR_NAME = ".local"
-"""Directorio de salida por defecto, relativo a la raíz del proyecto."""
 
 ROOT_PATTERNS = [
     "*.toml",
@@ -38,27 +40,26 @@ ROOT_PATTERNS = [
 """Ficheros en raíz a incluir."""
 
 
-def _directories(cfg: AcodoConfig) -> list[str]:
-    """Directorios cuya estructura se incluye completa."""
-    return [".github", "scripts", cfg.src_dir, cfg.test_dir]
+def archiver_for(output: Path) -> Archiver:
+    """Deduce el formato de compresión de la extensión de `output`.
+
+    Examples:
+        >>> archiver_for(Path("copia.tar.gz"))
+        <Archiver.TAR_GZ: 'tar.gz'>
+    """
+    for archiver in Archiver:
+        if output.name.endswith(f".{archiver.value}"):
+            return archiver
+    formats = ", ".join(f".{archiver.value}" for archiver in Archiver)
+    fail(f"El `target` de [backup] debe acabar en {formats}: {output.name}")
 
 
-def _clean_pycache(root: Path, dirs: list[str]) -> int:
-    """Borra los `__pycache__` de `dirs` (sin tocar `.venv`). Devuelve el total."""
-    caches = find_pycache(root, dirs)
-    for cache_dir in caches:
-        shutil.rmtree(cache_dir)
-    return len(caches)
-
-
-def _collect_files(root: Path, dirs: list[str]) -> list[Path]:
+def _collect_files(cfg: AcodoConfig) -> list[Path]:
     """Devuelve, ordenados y sin duplicados, los ficheros a incluir (relativos)."""
-    found: set[Path] = set()
-    for dir_name in dirs:
-        found.update(f for f in (root / dir_name).rglob("*") if f.is_file())
+    found = set(scope_files(cfg, "backup"))
     for pattern in ROOT_PATTERNS:
-        found.update(f for f in root.glob(pattern) if f.is_file())
-    return sorted(f.relative_to(root) for f in found)
+        found.update(f for f in cfg.root.glob(pattern) if f.is_file())
+    return sorted(f.relative_to(cfg.root) for f in found)
 
 
 def _write_zip(root: Path, output: Path, files: list[Path]) -> None:
@@ -86,21 +87,20 @@ def _write_archive(
             _write_tar_gz(root, output, files)
 
 
-def main(
-    file: BackupFileOption = None,
-    archiver: ArchiverOption = Archiver.ZIP,
-) -> None:
+def main() -> None:
     """Limpia las cachés y crea una copia de seguridad."""
     cfg = get_config()
     root = cfg.root
-    dirs = _directories(cfg)
-    output = (file or root / BACKUP_DIR_NAME / f"backup.{archiver.value}").resolve()
+    output = output_path(cfg, cfg.backup).resolve()
+    archiver = archiver_for(output)
 
     with console.status("Limpiando cachés __pycache__..."):
-        removed = _clean_pycache(root, dirs)
-    console.print(f"[ok]✓[/] {removed} directorios __pycache__ eliminados")
+        caches = find_pycache(cfg)
+        for cache_dir in caches:
+            shutil.rmtree(cache_dir)
+    console.print(f"[ok]✓[/] {len(caches)} directorios __pycache__ eliminados")
 
-    files = _collect_files(root, dirs)
+    files = _collect_files(cfg)
     if output in {(root / f).resolve() for f in files}:
         fail(f"La ruta de salida coincide con un fichero del proyecto: {output}")
 

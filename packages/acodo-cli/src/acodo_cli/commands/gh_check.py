@@ -1,10 +1,9 @@
 """Comprueba el acceso de una GitHub App al repositorio configurado.
 
-Usa la misma configuración JSON que `gh-token`.
+Usa el JSON indicado en `[github_app]` de `acodo.toml`, igual que `gh-token`.
 
 Uso:
     uv run acodo gh-check
-    uv run acodo gh-check -f .local/otro.json
 """
 
 import typer
@@ -13,23 +12,20 @@ from rich.table import Table
 
 from acodo_cli.commands_service import (
     console,
-    default_gh_config_file,
     err_console,
     generate_token,
     get_config,
+    gh_config_path,
     load_gh_config,
     normalize_repo,
     request,
     resolve_api_url,
 )
-from acodo_cli.typer_options import GhConfigFileOption
 
 
-def main(
-    file: GhConfigFileOption = None,
-) -> None:
+def main() -> None:
     """Comprueba el acceso al repositorio configurado."""
-    file = file or default_gh_config_file(get_config().root)
+    file = gh_config_path(get_config())
     cfg = load_gh_config(file)
 
     try:
