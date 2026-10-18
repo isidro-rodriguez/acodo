@@ -65,11 +65,11 @@ uv run acodo check    # formato, lint, tipos y tests con resumen final
 
 ## Referencia de la API
 
-La [referencia de la API](api/index.md) se genera a partir de los docstrings con
-`scripts/gen-api.py`, así que siempre refleja el código actual:
+La [referencia de la API](api/acodo/index.md) se genera al construir a partir de los
+docstrings, así que siempre refleja el código actual:
 
-- [`acodo.utils`](api/utils/index.md): validación, conversión, parseo y obtención de valores.
-- [`acodo.logger`](api/logger/index.md): logger con salida a consola y/o fichero.
+- [`acodo.utils`](api/acodo/utils/index.md): validación, conversión, parseo y obtención de valores.
+- [`acodo.logger`](api/acodo/logger/index.md): logger con salida a consola y/o fichero.
 
 ## Desarrollo
 
@@ -85,7 +85,6 @@ uv run pytest
 Para trabajar en la documentación:
 
 ```bash
-uv run python scripts/gen-api.py   # regenera la API en docs/api/
 uv run zensical serve              # previsualización local
 uv run zensical build              # build del sitio
 ```

@@ -34,17 +34,13 @@ jobs:
       - name: Sincronizar dependencias
         run: uv sync --all-packages --locked --dev
 
-      # docs/api/ no se versiona: se genera a partir de los docstrings.
-      - name: Generar la referencia de la API
-        run: uv run python scripts/gen-api.py
-
       - name: Construir documentación con Zensical
         run: uv run zensical build
 
       # Solo se publica desde main; en las pull requests basta con que compile.
       - name: Subir el sitio como artefacto de Pages
         if: github.event_name == 'push'
-        uses: actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@v3
         with:
           path: site
 
@@ -65,4 +61,4 @@ jobs:
     steps:
       - name: Desplegar
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@v4

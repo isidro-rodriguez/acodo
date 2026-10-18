@@ -54,13 +54,3 @@
 [data-md-color-scheme="slate"] .md-typeset h3 {
   color: var(--acodo-light-green);
 }
-
-/* Texto secundario (fechas, pie, enlaces al código) en marrón claro. */
-.md-typeset .acodo-source {
-  color: var(--acodo-light-brown);
-  font-size: 0.7rem;
-}
-
-.md-typeset .acodo-source:hover {
-  color: var(--md-accent-fg-color);
-}

@@ -63,10 +63,9 @@ cobertura, la regeneración de la API y la construcción de la documentación.
 ## Documentación
 
 La documentación vive en `docs/` y se construye con [Zensical](https://zensical.org).
-La referencia de la API se genera a partir de los docstrings y no se versiona:
+La referencia de la API se genera al construir, a partir de los docstrings:
 
 ```bash
-uv run python scripts/gen-api.py   # regenera docs/api/
 uv run zensical serve              # previsualización local
 uv run zensical build              # build del sitio
 ```

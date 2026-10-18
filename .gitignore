@@ -96,9 +96,6 @@ celerybeat.pid
 docs/_build/
 /site
 
-# API generada por scripts/gen-api.py (se regenera en pre-push)
-/docs/api/
-
 # Jupyter / IPython
 .ipynb_checkpoints/
 profile_default/

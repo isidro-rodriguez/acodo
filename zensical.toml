@@ -15,7 +15,30 @@ docs_dir = "docs"
 site_dir = "site"
 extra_css = ["assets/stylesheets/acodo.css"]
 
-# Sin `nav`: el menú se deduce de la estructura de `docs/`.
+# Sin `nav`: el menú se deduce de la estructura de `docs/`; la API la añade el
+# plugin `api-autonav` al construir.
+
+# Referencia de la API a partir de los docstrings (estilo Google).
+# Requiere `mkdocstrings-python` (grupo de desarrollo).
+[project.plugins.api-autonav]
+modules = ["packages/acodo-framework/src/acodo"]
+api_root_uri = "api"
+nav_section_title = "API"
+
+[project.plugins.mkdocstrings]
+locale = "es"
+custom_templates = "docs_templates"
+
+[project.plugins.mkdocstrings.handlers.python]
+paths = ["packages/acodo-framework/src/utils"]
+
+[project.plugins.mkdocstrings.handlers.python.options]
+docstring_style = "google"
+members_order = "source"
+merge_init_into_class = true
+separate_signature = true
+show_signature_annotations = true
+show_source = true
 
 [project.theme]
 language = "es"

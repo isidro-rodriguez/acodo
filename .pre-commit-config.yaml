@@ -51,22 +51,12 @@ repos:
         always_run: true
         stages: [ pre-push ]
 
-      # Regenera la API de docs/api/ a partir de los docstrings. Debe ir antes
-      # del build de Zensical, que la consume.
-      - id: gen-api
-        name: gen-api (referencia de la API)
-        entry: uv run python scripts/gen-api.py
-        language: system
-        files: ^(scripts/gen-api\.py|packages/.+/src/.+\.py)$
-        pass_filenames: false
-        stages: [ pre-push ]
-
       # Solo se ejecuta si el push toca la configuración, los textos de docs/ o
-      # el código fuente (del que se deriva la API).
+      # el código fuente (de cuyos docstrings se genera la API).
       - id: zensical-build
         name: zensical (build de documentación)
         entry: uv run zensical build
         language: system
-        files: ^(zensical\.toml|mkdocs\.yml|docs/.+\.(md|css)|scripts/gen-api\.py|packages/.+/src/.+\.py)$
+        files: ^(zensical\.toml|mkdocs\.yml|docs/.+\.(md|css)|packages/.+/src/.+\.py)$
         pass_filenames: false
         stages: [ pre-push ]
