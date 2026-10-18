@@ -1,7 +1,7 @@
 [project]
 name = "acodo-cli"
-version = "0.1.0"
-description = "CLI de desarrollo para proyectos Python: calidad, copias, compilado y GitHub App"
+version = "0.2.0"
+description = "CLI de desarrollo para proyectos Python: calidad, copias, API y GitHub App"
 readme = "README.md"
 requires-python = ">=3.13"
 license = "MIT"
