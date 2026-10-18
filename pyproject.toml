@@ -1,14 +1,107 @@
+# pyproject.toml
 [project]
 name = "acodo"
-version = "0.1.0"
+version = "0.0.0"
+description = "Workspace raíz del framework modular Acodo (no publicado)."
 requires-python = ">=3.13"
-dependencies = []
 
+
+# ---------------------------------------------------------------------------
+# uv: definición del workspace
+# ---------------------------------------------------------------------------
 [dependency-groups]
 dev = [
-    "pre-commit>=4.7.0", #
+    "pre-commit>=4.7.0",
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
     "ruff>=0.17.1",
     "ty>=0.0.89",
+    "zensical>=0.0.71",
 ]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+
+# ---------------------------------------------------------------------------
+# Ruff: formato y linting (una sola configuración para todos los miembros)
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "C4", "PERF", "PTH", "RUF", "D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["acodo", "acodo_cli", "acodo_template"]
+
+[tool.ruff.lint.per-file-ignores]
+"packages/*/tests/**" = ["D"]
+
+
+# -----------------------------------------------------------------------------
+# ty: comprobación de tipos de Astral
+# -----------------------------------------------------------------------------
+[tool.ty.environment]
+python-version = "3.13"
+
+[tool.ty.src]
+include = ["packages/*/src", "packages/*/tests"]
+
+[tool.ty.analysis]
+strict-equality-semantics = true
+strict-generic-narrowing = true
+
+[tool.ty.rules]
+possibly-unresolved-reference = "error"
+unused-ignore-comment = "warn"
+
+
+# -----------------------------------------------------------------------------
+# pytest: configuración de tests (los doctests de los docstrings se ejecutan)
+# -----------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["packages"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = ["-ra", "--strict-markers", "--import-mode=importlib", "--doctest-modules"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+]
+
+
+# -----------------------------------------------------------------------------
+# Cobertura (pytest-cov)
+# -----------------------------------------------------------------------------
+[tool.coverage.run]
+source = ["packages"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/__init__.py",
+]
+
+[tool.coverage.report]
+exclude_also = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
+
+
+# -----------------------------------------------------------------------------
+# acodo-cli: el propio workspace es el "proyecto" sobre el que se ejecuta
+# -----------------------------------------------------------------------------
+[tool.acodo-cli]
+src-dir = "packages"
+test-dir = "packages"
+python-version = ">=3.13"

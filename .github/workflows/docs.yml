@@ -14,9 +14,6 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  UV_PYTHON_DOWNLOADS: never
-
 jobs:
   build:
     name: Documentación (Zensical)
@@ -29,7 +26,7 @@ jobs:
       - name: Instalar uv
         uses: astral-sh/setup-uv@v10
         with:
-          version: "0.8.15"
+          version: "0.11.x"
           enable-cache: true
           cache-dependency-glob: "uv.lock"
           python-version-file: ".python-version"
@@ -37,5 +34,7 @@ jobs:
       - name: Sincronizar dependencias
         run: uv sync --all-packages --locked --dev
 
+      # La documentación aún no está inicializada: sin configuración no se construye.
       - name: Construir documentación con Zensical
+        if: hashFiles('zensical.toml', 'mkdocs.yml') != ''
         run: uv run zensical build

@@ -5,9 +5,9 @@ resuelve un problema concreto y se apoya en la biblioteca estándar siempre que 
 
 ## Paquetes
 
-- **`acodo-framework`** (`acodo`): utilidades puras — validación, parseo, formateo, logging
-  y base de datos JSON con hash. Sin dependencias externas.
-- **`acodo-cli`**: aplicación de consola construida con Typer.
+- **`acodo-framework`** (`acodo`): utilidades puras — validación, conversión, parseo y
+  logger (`acodo.utils` y `acodo.logger`). Sin dependencias externas.
+- **`acodo-cli`**: CLI de desarrollo construida con Typer (`uv run acodo`).
 - **`acodo-template`**: plantilla de proyecto que reúne las herramientas del framework.
 
 ## Instalación
@@ -18,26 +18,26 @@ El proyecto usa [uv](https://docs.astral.sh/uv/) y requiere Python 3.13 o superi
 # Entorno de desarrollo completo del monorepo
 uv sync --all-packages
 
-# Solo el framework (zero-dependency)
-uv add acodo-framework
-
-# Framework + CLI
-uv add acodo-cli
+# Ejecutar un comando contra un miembro concreto
+uv run --package acodo-cli acodo --version
 ```
+
+Los paquetes aún no están publicados en PyPI: entre miembros se enlazan con
+`[tool.uv.sources]` y `workspace = true`.
 
 ## Uso básico
 
 ```python
-from acodo.utils import valid_email, valid_url
-from acodo.logger import Logger
+from acodo.logger import get_logger
+from acodo.utils import valid_email
 
-log = Logger.init()
+log = get_logger("miapp")
 
 if valid_email("user@example.com"):
     log.info("Email válido")
 ```
 
-La CLI se instala con `acodo-cli`:
+La CLI se ejecuta desde la raíz del workspace:
 
 ```bash
 uv run acodo --help
@@ -52,6 +52,9 @@ uv run ruff format .
 uv run ruff check .
 uv run ty check
 uv run pytest
+
+# Equivalente, con resumen final
+uv run acodo check
 ```
 
 Los hooks de `pre-commit` cubren formato, lint, tipos y tests; la etapa `pre-push` añade
@@ -59,7 +62,8 @@ cobertura y la construcción de la documentación.
 
 ## Documentación
 
-La documentación se construye con [Zensical](https://zensical.org):
+La documentación (aún sin inicializar) vivirá en `docs/` y se construirá con
+[Zensical](https://zensical.org):
 
 ```bash
 uv run zensical serve   # previsualización local

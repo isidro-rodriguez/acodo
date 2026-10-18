@@ -180,22 +180,58 @@ def sum_numbers(a: int, b: int) -> int:
 - Examples:
     - `feat: añade cálculo de totales`
     - `fix: corrige validación de entrada`
-    - `docs: actualiza ejemplos de uso`
+    - `docs(cli): actualiza CHANGELOG para 0.1.1`
     - `test: cubre casos límite`
-    - `chore: renombrado de ficheros`
+    - `chore(framework): bump versión a 0.2.0`
 - A commit must be atomic and explain the why, not only the what.
 - Do not mix unrelated changes.
 - Prefix a commit that touches a single member with the member name when it adds clarity:
   `feat(cli): añade subcomando de sincronización`.
+- A push that changes a member's code without a version bump and a `CHANGELOG.md`
+  entry is considered incomplete and must be rejected.
 
 ## Definition of done
 
 A task is done when:
 
-- `uv run python dev.py check` passes without errors (run from the workspace root).
+- `uv run acodo check` passes without errors (run from the workspace root).
 - Documentation and README are updated if the API or usage changes.
 - Zensical still builds: `uv run zensical build` passes.
+- The affected member's version is bumped and its `CHANGELOG.md` is updated (required before push,
+  see *Versioning and changelog*).
 - The commit is atomic and in Spanish.
+
+## Versioning and changelog (pre-push)
+
+Before any `git push` that includes changes to a member's code, the agent must:
+
+1. **Bump the version** in that member's `pyproject.toml`, following SemVer:
+    - **MAJOR**: breaking changes to the public API.
+    - **MINOR**: new backward-compatible functionality.
+    - **PATCH**: backward-compatible bug fixes, internal refactors, docs-only changes
+      that affect the published package.
+2. **Update `CHANGELOG.md`** of the affected member, following
+   [Keep a Changelog](https://keepachangelog.com/):
+    - Add entries under `## [Unreleased]` while working, or promote them to
+      `## [X.Y.Z] - YYYY-MM-DD` when bumping.
+    - Group entries under `### Added`, `### Changed`, `### Fixed`, `### Removed`,
+      `### Deprecated`, `### Security`.
+    - Write entries in Spanish, in imperative or past tense, explaining the *why*.
+3. **Only touch the affected member (s).** Do not bump or edit the changelog of
+   unrelated packages. If a change spans several members (e.g. a shared interface),
+   bump each one independently and reflect it in each `CHANGELOG.md`.
+4. **Keep the lockfile consistent.** If the bump changes an inter-member dependency
+   constraint, update the dependent member's `pyproject.toml`, run
+   `uv sync --all-packages`, and commit the updated `uv.lock`.
+5. **Commit the release atomically**, immediately before the push:
+    - `chore(<member>): bump versión a X.Y.Z`
+    - `docs(<member>): actualiza CHANGELOG para X.Y.Z`
+      Or a single combined commit if the change and the release are inseparable.
+6. **Never bump the version of the workspace root.** It stays at `0.0.0` and is not
+   published.
+
+If the agent cannot determine whether a change is breaking, it must ask the user
+before choosing MAJOR. When in doubt between PATCH and MINOR, prefer MINOR.
 
 ## Limits
 

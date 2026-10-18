@@ -3,6 +3,7 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/_local" />
     </content>
     <orderEntry type="jdk" jdkName="D:\Ocio\Acodo\.venv" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
