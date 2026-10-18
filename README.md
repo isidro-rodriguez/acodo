@@ -28,10 +28,10 @@ Los paquetes aún no están publicados en PyPI: entre miembros se enlazan con
 ## Uso básico
 
 ```python
-from acodo.logger import get_logger
+from acodo.logger import Logger
 from acodo.utils import valid_email
 
-log = get_logger("miapp")
+log = Logger("miapp")
 
 if valid_email("user@example.com"):
     log.info("Email válido")
@@ -58,16 +58,17 @@ uv run acodo check
 ```
 
 Los hooks de `pre-commit` cubren formato, lint, tipos y tests; la etapa `pre-push` añade
-cobertura y la construcción de la documentación.
+cobertura, la regeneración de la API y la construcción de la documentación.
 
 ## Documentación
 
-La documentación (aún sin inicializar) vivirá en `docs/` y se construirá con
-[Zensical](https://zensical.org):
+La documentación vive en `docs/` y se construye con [Zensical](https://zensical.org).
+La referencia de la API se genera a partir de los docstrings y no se versiona:
 
 ```bash
-uv run zensical serve   # previsualización local
-uv run zensical build   # build del sitio
+uv run python scripts/gen-api.py   # regenera docs/api/
+uv run zensical serve              # previsualización local
+uv run zensical build              # build del sitio
 ```
 
 ## Licencia

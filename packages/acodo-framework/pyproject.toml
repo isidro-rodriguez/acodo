@@ -1,6 +1,6 @@
 [project]
 name = "acodo-framework"
-version = "0.1.0"
+version = "0.2.0"
 description = "Utilidades puras del framework Acodo: validación, conversión, parseo y logger."
 readme = "README.md"
 requires-python = ">=3.13"

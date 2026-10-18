@@ -1,0 +1,42 @@
+# .github/workflows/docs.yml
+name: Docs
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Documentación (Zensical)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Instalar uv
+        uses: astral-sh/setup-uv@v10
+        with:
+          version: "0.11.x"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          python-version-file: ".python-version"
+
+      - name: Sincronizar dependencias
+        run: uv sync --all-packages --locked --dev
+
+      # docs/api/ no se versiona: se genera a partir de los docstrings.
+      - name: Generar la referencia de la API
+        run: uv run python scripts/gen-api.py
+
+      - name: Construir documentación con Zensical
+        run: uv run zensical build

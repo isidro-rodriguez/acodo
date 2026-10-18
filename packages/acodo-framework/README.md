@@ -21,13 +21,13 @@ Para trabajar en el monorepo, desde la raíz: `uv sync --all-packages`.
 ## 🛠️ Uso
 
 ```python
-from acodo.logger import get_logger
+from acodo.logger import Logger
 from acodo.utils import to_bool, valid_email
 
 to_bool("sí")  # True
 valid_email("hola")  # False
 
-log = get_logger("miapp")
+log = Logger("miapp")
 log.info("Procesando %(n)s ficheros", n=3)
 ```
 
@@ -36,7 +36,7 @@ log.info("Procesando %(n)s ficheros", n=3)
 - `acodo.utils`: funciones agrupadas por prefijo (`get_*`, `has_*`, `parse_*`,
   `to_*`, `valid_*`) y el tipo `SocialLink`. Convenciones y errores en el docstring
   del paquete.
-- `acodo.logger`: `Logger` y `get_logger`; consola y/o fichero con rotación diaria.
+- `acodo.logger`: `Logger`; consola y/o fichero con rotación diaria.
 
 `acodo.logger` depende de `acodo.utils`, nunca al revés.
 
@@ -52,7 +52,7 @@ src/acodo/
 │   ├── types.py          # SocialLink
 │   └── validators.py     # valid_*
 └── logger/
-    └── logger.py         # Logger y get_logger
+    └── logger.py         # Logger
 ```
 
 ## Licencia

@@ -253,10 +253,6 @@ from .validators import (
     valid_uuid as valid_uuid,
 )
 
-# pdoc documenta cada módulo en su propia página, y la del paquete solo lista los
-# módulos. Las funciones y clases se reexportan con alias redundante
-# (`from .x import f as f`), que es como los verificadores de tipos reconocen una
-# reexportación en un paquete con `py.typed`, sin necesidad de `__all__`.
 __all__ = [
     "checkers",
     "converters",

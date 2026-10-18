@@ -1,0 +1,66 @@
+/* Tema de Zensical con la paleta del framework Acodo.
+ *
+ * Paleta (la misma que `acodo_cli.theme`):
+ *   white #FFFFFF · green #2E7D32 · light_green #66BB6A
+ *   dark_brown #5D4037 · light_brown #8C6E63 · orange #E65100
+ */
+
+:root {
+  --acodo-white: #ffffff;
+  --acodo-green: #2e7d32;
+  --acodo-light-green: #66bb6a;
+  --acodo-dark-brown: #5d4037;
+  --acodo-light-brown: #8c6e63;
+  --acodo-orange: #e65100;
+}
+
+/* Modo claro: cabecera verde, enlaces verdes, acento naranja. */
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: var(--acodo-green);
+  --md-primary-fg-color--light: var(--acodo-light-green);
+  --md-primary-fg-color--dark: color-mix(in srgb, var(--acodo-green) 70%, black);
+  --md-primary-bg-color: var(--acodo-white);
+  --md-primary-bg-color--light: rgb(255 255 255 / 70%);
+  --md-accent-fg-color: var(--acodo-orange);
+  --md-accent-fg-color--transparent: rgb(230 81 0 / 10%);
+  --md-accent-bg-color: var(--acodo-white);
+  --md-accent-bg-color--light: rgb(255 255 255 / 70%);
+  --md-typeset-a-color: var(--acodo-green);
+  --md-code-hl-string-color: var(--acodo-green);
+}
+
+[data-md-color-scheme="default"] .md-typeset h1,
+[data-md-color-scheme="default"] .md-typeset h2,
+[data-md-color-scheme="default"] .md-typeset h3 {
+  color: var(--acodo-dark-brown);
+}
+
+/* Modo oscuro: cabecera marrón, enlaces verde claro, acento naranja. */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: var(--acodo-dark-brown);
+  --md-primary-fg-color--light: var(--acodo-light-brown);
+  --md-primary-fg-color--dark: color-mix(in srgb, var(--acodo-dark-brown) 70%, black);
+  --md-primary-bg-color: var(--acodo-white);
+  --md-primary-bg-color--light: rgb(255 255 255 / 70%);
+  --md-accent-fg-color: var(--acodo-orange);
+  --md-accent-fg-color--transparent: rgb(230 81 0 / 10%);
+  --md-accent-bg-color: var(--acodo-white);
+  --md-accent-bg-color--light: rgb(255 255 255 / 70%);
+  --md-typeset-a-color: var(--acodo-light-green);
+}
+
+[data-md-color-scheme="slate"] .md-typeset h1,
+[data-md-color-scheme="slate"] .md-typeset h2,
+[data-md-color-scheme="slate"] .md-typeset h3 {
+  color: var(--acodo-light-green);
+}
+
+/* Texto secundario (fechas, pie, enlaces al código) en marrón claro. */
+.md-typeset .acodo-source {
+  color: var(--acodo-light-brown);
+  font-size: 0.7rem;
+}
+
+.md-typeset .acodo-source:hover {
+  color: var(--md-accent-fg-color);
+}

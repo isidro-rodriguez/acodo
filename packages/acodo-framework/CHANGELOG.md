@@ -7,6 +7,17 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-18
+
+### Changed
+
+- `Logger` se construye directamente con `Logger(name, *, file=None, debug=False)` y sigue siendo idempotente por nombre. Se simplifica la API: ya no hace falta una función auxiliar.
+- La consola antepone la etiqueta del nivel (`[INFO]`, `[ERROR]`...), con color solo si la salida es un terminal y no está definida `NO_COLOR`. El fichero de log nunca recibe códigos ANSI.
+
+### Removed
+
+- `get_logger`, sustituida por el constructor de `Logger`.
+
 ## [0.1.0] - 2026-10-17
 
 ### Added

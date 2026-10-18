@@ -3,12 +3,11 @@
 Uso:
 
 ```python
-from acodo.logger import get_logger
+from acodo.logger import Logger
 
-log = get_logger("miapp")
+log = Logger("miapp")
 log.info("Procesando %(n)s ficheros", n=3)
 ```
 """
 
 from .logger import Logger as Logger
-from .logger import get_logger as get_logger
