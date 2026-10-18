@@ -17,11 +17,12 @@ Uso:
 """
 
 import sys
-from collections.abc import Callable
 from pathlib import Path
+from typing import Annotated
 
 import typer
 
+from acodo_cli.banner import version_callback
 from acodo_cli.commands import (
     api,
     backup,
@@ -36,81 +37,100 @@ from acodo_cli.commands import (
 )
 from acodo_cli.commands_service import is_global_install
 from acodo_cli.theme import apply_typer_styles
-from acodo_cli.typer_options import VersionOption
 
 apply_typer_styles()
 
+app = typer.Typer(
+    add_completion=False,
+    help="Herramientas de desarrollo del proyecto.",
+)
 
+
+@app.command(name="api")
 def api_() -> None:
     """Genera la documentación de la API a partir de los docstrings."""
     api.main()
 
 
+@app.command(name="backup")
 def backup_() -> None:
     """Limpia las cachés y crea una copia de seguridad."""
     backup.main()
 
 
+@app.command(name="check", rich_help_panel="Quality check")
 def check_() -> None:
     """Ejecuta format, lint, types y tests."""
     check.main()
 
 
+@app.command(name="clean")
 def clean_() -> None:
     """Elimina cachés y artefactos generados, previa confirmación."""
     clean.main()
 
 
+@app.command(name="code-count")
 def code_count_() -> None:
     """Cuenta las líneas de código y de docstrings."""
     code_count.main()
 
 
+@app.command(name="doctor")
 def doctor_() -> None:
     """Comprueba que el entorno y la configuración están listos."""
     doctor.main()
 
 
+@app.command(name="format", rich_help_panel="Quality check")
 def format_() -> None:
     """Formatea el código (ruff format)."""
     check.run_steps(("format",))
 
 
+@app.command(name="gh-check")
 def gh_check_() -> None:
     """Comprueba el acceso al repositorio configurado."""
     gh_check.main()
 
 
+@app.command(name="gh-token")
 def gh_token_() -> None:
     """Genera un token de instalación para la GitHub App."""
     gh_token.main()
 
 
+@app.command(name="init")
 def init_() -> None:
     """Crea el acodo.toml por defecto en el directorio actual."""
     init.main()
 
 
+@app.command(name="lint", rich_help_panel="Quality check")
 def lint_() -> None:
     """Revisa y autocorrige el lint (ruff check --fix)."""
     check.run_steps(("lint",))
 
 
+@app.command(name="tests", rich_help_panel="Quality check")
 def tests_() -> None:
     """Ejecuta las pruebas (pytest)."""
     check.run_steps(("tests",))
 
 
+@app.command(name="tests-cov", rich_help_panel="Quality check")
 def tests_cov_() -> None:
     """Ejecuta las pruebas con cobertura (requiere pytest-cov)."""
     check.run_steps(("tests-cov",))
 
 
+@app.command(name="todo")
 def todo_() -> None:
     """Lista los marcadores TODO, FIXME, XXX y HACK del código."""
     todo.main()
 
 
+@app.command(name="types", rich_help_panel="Quality check")
 def types_() -> None:
     """Comprueba el tipado (ty check)."""
     check.run_steps(("types",))
@@ -120,27 +140,19 @@ def _is_global() -> bool:
     return is_global_install(Path(sys.prefix), Path(sys.base_prefix))
 
 
-COMMANDS: dict[str, Callable[[], None]] = {
-    "api": api_,
-    "backup": backup_,
-    "check": check_,
-    "clean": clean_,
-    "code-count": code_count_,
-    "doctor": doctor_,
-    "format": format_,
-    "gh-check": gh_check_,
-    "gh-token": gh_token_,
-    "init": init_,
-    "lint": lint_,
-    "tests": tests_,
-    "tests-cov": tests_cov_,
-    "todo": todo_,
-    "types": types_,
-}
-"""Comandos de la CLI: nombre y función que llama a su script."""
-
-
-def _main(ctx: typer.Context, version: VersionOption = False) -> None:
+@app.callback(invoke_without_command=True)
+def _main(
+    ctx: typer.Context,
+    _version: Annotated[
+        bool,
+        typer.Option(
+            default="--version",
+            callback=version_callback,
+            is_eager=True,
+            help="Muestra la versión de acodo y sale.",
+        ),
+    ] = False,
+) -> None:
     """Comando por defecto: sin subcomando muestra la ayuda (u ofrece inicializar)."""
     if ctx.invoked_subcommand is not None:
         return
@@ -157,23 +169,3 @@ def _main(ctx: typer.Context, version: VersionOption = False) -> None:
     help_text = ctx.get_help()
     if help_text:
         typer.echo(help_text)
-
-
-def build_app() -> typer.Typer:
-    """Crea la aplicación; en una instalación global solo registra `init`.
-
-    El resto de comandos usan `ruff`, `ty` y `pytest` del entorno del proyecto,
-    que no existen fuera de él.
-    """
-    app = typer.Typer(
-        add_completion=False,
-        help="Herramientas de desarrollo del proyecto.",
-    )
-    names = ("init",) if _is_global() else tuple(COMMANDS)
-    for name in names:
-        app.command(name)(COMMANDS[name])
-    app.callback(invoke_without_command=True)(_main)
-    return app
-
-
-app = build_app()

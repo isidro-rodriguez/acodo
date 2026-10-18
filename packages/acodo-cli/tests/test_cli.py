@@ -4,10 +4,8 @@ from importlib.metadata import entry_points
 from pathlib import Path
 
 import pytest
-import typer
 from typer.testing import CliRunner
 
-from acodo_cli import cli
 from acodo_cli.cli import app
 from acodo_cli.commands_service import is_global_install
 
@@ -114,43 +112,6 @@ def test_console_script_points_to_the_app() -> None:
     scripts = {ep.name: ep.value for ep in entry_points(group="console_scripts")}
 
     assert scripts["acodo"] == "acodo_cli.cli:app"
-
-
-def global_app(monkeypatch: pytest.MonkeyPatch) -> typer.Typer:
-    monkeypatch.setattr(cli, "is_global_install", lambda prefix, base_prefix: True)
-    return cli.build_app()
-
-
-def test_global_install_only_exposes_init(
-    runner: CliRunner, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    app = global_app(monkeypatch)
-
-    result = runner.invoke(app, ["--help"])
-
-    assert result.exit_code == 0
-    assert "init" in result.output
-    assert "backup" not in result.output
-    assert "--version" in result.output
-
-
-def test_global_install_rejects_other_commands(
-    runner: CliRunner, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    app = global_app(monkeypatch)
-
-    assert runner.invoke(app, ["code-count"]).exit_code == 2
-
-
-def test_global_install_does_not_offer_to_initialize(
-    bare_dir: Path, runner: CliRunner, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    app = global_app(monkeypatch)
-
-    result = runner.invoke(app, [])
-
-    assert result.exit_code == 0
-    assert not (bare_dir / "acodo.toml").exists()
 
 
 def test_is_global_install_without_virtualenv(tmp_path: Path) -> None:
