@@ -382,13 +382,6 @@ def _render_module(path: Path, dotted: str, exported: set[str]) -> list[str]:
     package = dotted.rsplit(".", 1)[0]
     if entries and all(entry.title in exported for entry in entries):
         lines += [f"Todo lo documentado aquí se importa desde `{package}`.", ""]
-    if entries:
-        lines += ["## Resumen", ""]
-        lines += [
-            f"- [`{e.title}`](#{e.anchor}){': ' + e.summary if e.summary else ''}"
-            for e in entries
-        ]
-        lines.append("")
     return lines + blocks
 
 
