@@ -40,3 +40,29 @@ jobs:
 
       - name: Construir documentación con Zensical
         run: uv run zensical build
+
+      # Solo se publica desde main; en las pull requests basta con que compile.
+      - name: Subir el sitio como artefacto de Pages
+        if: github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy:
+    name: Publicar en GitHub Pages
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Desplegar
+        id: deployment
+        uses: actions/deploy-pages@v5
