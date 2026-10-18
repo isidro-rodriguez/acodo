@@ -19,6 +19,8 @@ extra_css = ["assets/stylesheets/acodo.css"]
 
 [project.theme]
 language = "es"
+favicon = "assets/images/favicon.png"
+logo = "assets/images/logo.png"
 features = [
     "content.code.annotate",
     "content.code.copy",
