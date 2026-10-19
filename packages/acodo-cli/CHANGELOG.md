@@ -5,7 +5,13 @@ Todos los cambios relevantes de `acodo-cli` se documentan en este fichero.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el
 proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
-## [Unreleased]
+## [0.2.2] - 2026-10-19
+
+### Changed
+
+- README: añadida la sección «Enlaces» (repositorio, documentación y PyPI) y la instalación desde
+  PyPI, ya que el paquete está publicado.
+- README: el enlace a la licencia es absoluto para que funcione en la página de PyPI.
 
 ## [0.2.0] - 2026-10-18
 

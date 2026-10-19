@@ -6,17 +6,14 @@ es `acodo`.
 
 ## 🚀 Instalación
 
-Dentro del workspace se enlaza con `workspace = true`:
+Desde [PyPI](https://pypi.org/project/acodo-framework/):
 
-```toml
-[project]
-dependencies = ["acodo-framework"]
-
-[tool.uv.sources]
-acodo-framework = { workspace = true }
+```bash
+uv add acodo-framework
 ```
 
-Para trabajar en el monorepo, desde la raíz: `uv sync --all-packages`.
+Para trabajar en el monorepo, desde la raíz: `uv sync --all-packages`. Entre miembros se
+enlaza con `acodo-framework = { workspace = true }` en `[tool.uv.sources]`.
 
 ## 🛠️ Uso
 
@@ -55,6 +52,13 @@ src/acodo/
     └── logger.py         # Logger
 ```
 
+## Enlaces
+
+- Repositorio: <https://github.com/isidro-rodriguez/acodo>
+- Documentación: <https://isidro-rodriguez.github.io/acodo/>
+- PyPI: <https://pypi.org/project/acodo-framework/>
+- Plantilla de proyecto: <https://github.com/isidro-rodriguez/acodo-template>
+
 ## Licencia
 
-[MIT](LICENSE).
+[MIT](https://github.com/isidro-rodriguez/acodo/blob/main/LICENSE).

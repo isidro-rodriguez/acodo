@@ -7,17 +7,14 @@ configuración de `acodo.toml`. Construido con [Typer](https://typer.tiangolo.co
 
 ## 🚀 Instalación
 
-Dentro del workspace, como dependencia de desarrollo de otro miembro:
+Desde [PyPI](https://pypi.org/project/acodo-cli/), como dependencia de desarrollo:
 
-```toml
-[dependency-groups]
-dev = ["acodo-cli"]
-
-[tool.uv.sources]
-acodo-cli = { workspace = true }
+```bash
+uv add --dev acodo-cli
 ```
 
-Para trabajar en el monorepo, desde la raíz: `uv sync --all-packages`.
+Para trabajar en el monorepo, desde la raíz: `uv sync --all-packages`. Entre miembros se
+enlaza con `acodo-cli = { workspace = true }` en `[tool.uv.sources]`.
 
 Instalado como herramienta global (`uv tool install`, `pipx` o Python del sistema) solo
 expone `init`: el resto de comandos usan `ruff`, `ty` y `pytest` del entorno del proyecto.
@@ -124,6 +121,13 @@ src/acodo_cli/
 └── commands/             # un script por comando (api, backup, check, clean...)
 ```
 
+## Enlaces
+
+- Repositorio: <https://github.com/isidro-rodriguez/acodo>
+- Documentación: <https://isidro-rodriguez.github.io/acodo/>
+- PyPI: <https://pypi.org/project/acodo-cli/>
+- Plantilla de proyecto: <https://github.com/isidro-rodriguez/acodo-template>
+
 ## Licencia
 
-[MIT](LICENSE).
+[MIT](https://github.com/isidro-rodriguez/acodo/blob/main/LICENSE).

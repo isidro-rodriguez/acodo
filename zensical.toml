@@ -30,7 +30,7 @@ locale = "es"
 custom_templates = "docs_templates"
 
 [project.plugins.mkdocstrings.handlers.python]
-paths = ["packages/acodo-framework/src/utils"]
+paths = ["packages/acodo-framework/src"]
 
 [project.plugins.mkdocstrings.handlers.python.options]
 docstring_style = "google"
@@ -63,7 +63,7 @@ features = [
     "toc.follow",
 ]
 
-# Los colores reales (paleta Acodo) están en `docs/stylesheets/acodo.css`.
+# Los colores reales (paleta Acodo) están en `docs/assets/stylesheets/acodo.css`.
 [[project.theme.palette]]
 media = "(prefers-color-scheme)"
 primary = "custom"

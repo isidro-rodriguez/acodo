@@ -21,19 +21,7 @@ jobs:
           python-version: '3.13'
 
       - name: Install build & tooling
-        run: python -m pip install --upgrade pip build twine uv gh
-
-      - name: Debug - list env & check secrets
-        run: |
-          echo "GITHUB_REF=$GITHUB_REF"
-          echo "Show secret keys presence:"
-          if [ -z "${{ secrets.TEMPLATE_REPO_PAT }}" ]; then
-            echo "TEMPLATE_REPO_PAT is EMPTY or not set"
-          else
-            echo "TEMPLATE_REPO_PAT is SET"
-          fi
-          gh --version || true
-          python --version
+        run: python -m pip install --upgrade pip build uv
 
       - name: Sync uv workspace
         run: uv sync --all-packages
@@ -53,16 +41,6 @@ jobs:
       - name: Debug - show dist artifacts
         run: ls -la packages/acodo-template/dist || true
 
-      - name: Authenticate gh CLI (for debug)
-        env:
-          GH_TOKEN: ${{ secrets.TEMPLATE_REPO_PAT }}
-        run: |
-          echo "$GH_TOKEN" > /tmp/token.txt
-          # Test gh auth (will fail if token invalid)
-          echo "$GH_TOKEN" | gh auth login --with-token || true
-          gh auth status || true
-          gh api /user --jq '.login' || true
-
       - name: Update target repository (safe push)
         env:
           PAT: ${{ secrets.TEMPLATE_REPO_PAT }}
@@ -78,8 +56,18 @@ jobs:
             git remote add origin https://x-access-token:${PAT}@github.com/isidro-rodriguez/acodo-template.git
             cd ..
           fi
-          rsync -a --delete --exclude='.git' packages/acodo-template/ target/
+          rsync -a --delete --exclude='.git' --exclude='dist/' packages/acodo-template/ target/
           cd target
+          # [tool.uv.sources] solo tiene sentido en el workspace: en el repo
+          # independiente las dependencias se resuelven desde PyPI.
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          path = Path("pyproject.toml")
+          text = re.sub(r"\[tool\.uv\.sources\]\n(?:.*\n)*?(?=\n\[|\Z)", "", path.read_text())
+          path.write_text(text)
+          PY
           git add -A
           if git diff --cached --quiet; then
             echo "No changes to commit"
@@ -98,15 +86,12 @@ jobs:
 
       - name: Create release on target repo and upload artifacts
         env:
-          PAT: ${{ secrets.TEMPLATE_REPO_PAT }}
+          GH_TOKEN: ${{ secrets.TEMPLATE_REPO_PAT }}
         run: |
-          TAG="${TAG}"
-          gh release create "${TAG}" --repo isidro-rodriguez/acodo-template --title "${TAG}" --notes "Release ${TAG}" || echo "release exists or failed to create"
-          for f in packages/acodo-template/dist/*; do
-            if [ -f "$f" ]; then
-              gh release upload "${TAG}" "$f" --repo isidro-rodriguez/acodo-template --clobber || true
-            fi
-          done
+          set -euo pipefail
+          gh release create "${TAG}" packages/acodo-template/dist/* \
+            --repo isidro-rodriguez/acodo-template \
+            --title "${TAG}" --notes "Release ${TAG}"
 
       - name: Done
         run: |

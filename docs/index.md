@@ -21,15 +21,26 @@ estándar siempre que es posible.
 El proyecto usa [uv](https://docs.astral.sh/uv/) y requiere Python 3.13 o superior.
 
 ```bash
+uv add acodo-framework        # biblioteca (PyPI)
+uv add --dev acodo-cli        # CLI de desarrollo (PyPI)
+```
+
+Para trabajar en el monorepo:
+
+```bash
 git clone https://github.com/isidro-rodriguez/acodo.git
 cd acodo
 uv sync --all-packages
 ```
 
-!!! note "Aún sin publicar"
+Dentro del workspace, los miembros se enlazan entre sí con `[tool.uv.sources]` y
+`workspace = true`.
 
-    Los paquetes todavía no están en PyPI. Dentro del workspace se enlazan entre sí con
-    `[tool.uv.sources]` y `workspace = true`.
+## Enlaces
+
+- Repositorio: <https://github.com/isidro-rodriguez/acodo>
+- Plantilla de proyecto: <https://github.com/isidro-rodriguez/acodo-template>
+- PyPI: [`acodo-framework`](https://pypi.org/project/acodo-framework/) · [`acodo-cli`](https://pypi.org/project/acodo-cli/)
 
 ## Uso básico
 

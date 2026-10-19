@@ -41,7 +41,7 @@ dev = [
 
 [[package]]
 name = "acodo-cli"
-version = "0.2.1"
+version = "0.2.2"
 source = { editable = "packages/acodo-cli" }
 dependencies = [
     { name = "acodo-framework" },
@@ -60,12 +60,12 @@ requires-dist = [
 
 [[package]]
 name = "acodo-framework"
-version = "0.2.0"
+version = "0.2.1"
 source = { editable = "packages/acodo-framework" }
 
 [[package]]
 name = "acodo-template"
-version = "0.2.0"
+version = "0.2.1"
 source = { editable = "packages/acodo-template" }
 dependencies = [
     { name = "acodo-framework" },
@@ -74,13 +74,25 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "acodo-cli" },
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+    { name = "ty" },
 ]
 
 [package.metadata]
 requires-dist = [{ name = "acodo-framework", editable = "packages/acodo-framework" }]
 
 [package.metadata.requires-dev]
-dev = [{ name = "acodo-cli", editable = "packages/acodo-cli" }]
+dev = [
+    { name = "acodo-cli", editable = "packages/acodo-cli" },
+    { name = "pre-commit", specifier = ">=4.7.0" },
+    { name = "pytest", specifier = ">=9.1.1" },
+    { name = "pytest-cov", specifier = ">=7.1.0" },
+    { name = "ruff", specifier = ">=0.17.1" },
+    { name = "ty", specifier = ">=0.0.89" },
+]
 
 [[package]]
 name = "annotated-doc"

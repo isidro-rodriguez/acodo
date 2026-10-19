@@ -22,8 +22,8 @@ uv sync --all-packages
 uv run --package acodo-cli acodo --version
 ```
 
-Los paquetes aún no están publicados en PyPI: entre miembros se enlazan con
-`[tool.uv.sources]` y `workspace = true`.
+Los paquetes `acodo-framework` y `acodo-cli` están publicados en PyPI. Dentro del
+monorepo, los miembros se enlazan entre sí con `[tool.uv.sources]` y `workspace = true`.
 
 ## Uso básico
 
@@ -58,7 +58,7 @@ uv run acodo check
 ```
 
 Los hooks de `pre-commit` cubren formato, lint, tipos y tests; la etapa `pre-push` añade
-cobertura, la regeneración de la API y la construcción de la documentación.
+cobertura y la construcción de la documentación.
 
 ## Documentación
 
@@ -69,6 +69,13 @@ La referencia de la API se genera al construir, a partir de los docstrings:
 uv run zensical serve              # previsualización local
 uv run zensical build              # build del sitio
 ```
+
+## Enlaces
+
+- Repositorio: <https://github.com/isidro-rodriguez/acodo>
+- Plantilla de proyecto (repositorio independiente): <https://github.com/isidro-rodriguez/acodo-template>
+- Documentación: <https://isidro-rodriguez.github.io/acodo/>
+- PyPI: [`acodo-framework`](https://pypi.org/project/acodo-framework/) · [`acodo-cli`](https://pypi.org/project/acodo-cli/)
 
 ## Licencia
 
