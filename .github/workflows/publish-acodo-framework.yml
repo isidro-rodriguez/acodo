@@ -1,0 +1,46 @@
+name: Publish acodo-framework to PyPI
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-publish:
+    name: Build, check and publish acodo-framework
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Install build tools
+        run: python -m pip install --upgrade pip build twine uv
+
+      - name: Sync uv workspace
+        run: uv sync --all-packages
+
+      - name: Run quality checks
+        run: uv run --package acodo-cli acodo check
+
+      - name: Build acodo-framework
+        run: |
+          cd packages/acodo-framework
+          python -m build
+
+      - name: Check package metadata
+        run: python -m twine check packages/acodo-framework/dist/*
+
+      - name: Publish to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN_ACODO_FRAMEWORK }}
+        run: |
+          twine upload packages/acodo-framework/dist/*
