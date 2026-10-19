@@ -1,66 +1,94 @@
 name: Publish acodo-template as repository template
 
+# Se publica al subir a main un cambio en la plantilla. La versión sale de su
+# `pyproject.toml`; si el repo acodo-template ya tiene la release `vX.Y.Z`, no se repite.
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [ main ]
+    paths:
+      - 'packages/acodo-template/**'
   workflow_dispatch: { }
 
+concurrency:
+  group: publish-acodo-template
+  cancel-in-progress: false
+
+env:
+  TARGET_REPO: isidro-rodriguez/acodo-template
+
 jobs:
-  build-and-publish-template:
-    name: Build, check and publish acodo-template repo
+  check:
+    name: Comprobar versión
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      tag: ${{ steps.meta.outputs.tag }}
+      exists: ${{ steps.meta.outputs.exists }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+      - name: Leer versión y comprobar si ya está publicada
+        id: meta
+        env:
+          GH_TOKEN: ${{ secrets.TEMPLATE_REPO_PAT }}
+        run: |
+          set -euo pipefail
+          VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('packages/acodo-template/pyproject.toml', 'rb'))['project']['version'])")
+          TAG="v${VERSION}"
+          if gh release view "${TAG}" --repo "${TARGET_REPO}" > /dev/null 2>&1; then
+            EXISTS=true
+            echo "::warning::${TAG} ya existe en ${TARGET_REPO}: si has cambiado la plantilla, sube la versión en su pyproject.toml."
+          else
+            EXISTS=false
+          fi
+          {
+            echo "version=${VERSION}"
+            echo "tag=${TAG}"
+            echo "exists=${EXISTS}"
+          } >> "$GITHUB_OUTPUT"
+
+  publish:
+    name: Publicar plantilla ${{ needs.check.outputs.version }}
+    needs: check
+    if: needs.check.outputs.exists == 'false'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Instalar uv y Python
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: '3.13'
 
-      - name: Install build & tooling
-        run: python -m pip install --upgrade pip build uv
-
-      - name: Sync uv workspace
+      - name: Sincronizar workspace
         run: uv sync --all-packages
 
-      - name: Run quality checks
+      - name: Comprobaciones de calidad
         run: uv run --package acodo-cli acodo check
 
-      - name: Build acodo-template
-        run: |
-          cd packages/acodo-template
-          python -m build
-          ls -la dist || true
+      - name: Construir acodo-template
+        run: uv build --package acodo-template
 
-      - name: Prepare TAG env
-        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-
-      - name: Debug - show dist artifacts
-        run: ls -la packages/acodo-template/dist || true
-
-      - name: Update target repository (safe push)
+      - name: Actualizar el repositorio de la plantilla
         env:
           PAT: ${{ secrets.TEMPLATE_REPO_PAT }}
+          TAG: ${{ needs.check.outputs.tag }}
         run: |
           set -euo pipefail
-          TAG="${TAG}"
-          rm -rf target || true
-          git clone https://x-access-token:${PAT}@github.com/isidro-rodriguez/acodo-template.git target || true
-          if [ ! -d target ]; then
-            mkdir target
-            cd target
-            git init
-            git remote add origin https://x-access-token:${PAT}@github.com/isidro-rodriguez/acodo-template.git
-            cd ..
-          fi
+          git clone "https://x-access-token:${PAT}@github.com/${TARGET_REPO}.git" target
           rsync -a --delete --exclude='.git' --exclude='dist/' packages/acodo-template/ target/
           cd target
           # [tool.uv.sources] solo tiene sentido en el workspace: en el repo
           # independiente las dependencias se resuelven desde PyPI.
-          python - <<'PY'
+          python3 - <<'PY'
           import re
           from pathlib import Path
 
@@ -70,29 +98,20 @@ jobs:
           PY
           git add -A
           if git diff --cached --quiet; then
-            echo "No changes to commit"
+            echo "Sin cambios que subir"
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "chore: update template to ${TAG}"
-            # Try push; capture push output for debugging
-            if ! git push origin HEAD:main 2>&1 | tee /tmp/git-push.log; then
-              echo "git push failed — possible branch protection or permission error"
-              echo "---- git-push.log ----"
-              cat /tmp/git-push.log || true
-              exit 1
-            fi
+            git commit -m "chore: actualiza la plantilla a ${TAG}"
+            git push origin HEAD:main
           fi
 
-      - name: Create release on target repo and upload artifacts
+      - name: Crear release en el repositorio de la plantilla
         env:
           GH_TOKEN: ${{ secrets.TEMPLATE_REPO_PAT }}
         run: |
-          set -euo pipefail
-          gh release create "${TAG}" packages/acodo-template/dist/* \
-            --repo isidro-rodriguez/acodo-template \
-            --title "${TAG}" --notes "Release ${TAG}"
-
-      - name: Done
-        run: |
-          echo "acodo-template publish job finished (tag: ${TAG})"
+          gh release create "${{ needs.check.outputs.tag }}" dist/* \
+            --repo "${TARGET_REPO}" \
+            --target main \
+            --title "acodo-template ${{ needs.check.outputs.version }}" \
+            --generate-notes
