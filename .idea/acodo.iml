@@ -7,6 +7,7 @@
       <excludeFolder url="file://$MODULE_DIR$/.coverage" />
       <excludeFolder url="file://$MODULE_DIR$/site" />
       <excludeFolder url="file://$MODULE_DIR$/.cache" />
+      <excludeFolder url="file://$MODULE_DIR$/.kilo" />
     </content>
     <orderEntry type="jdk" jdkName="D:\Ocio\Acodo\.venv" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

@@ -138,6 +138,9 @@ logs/
 # ─── Directorios privados ────────────────────────────────────
 .local/
 
+# ─── Agentes ─────────────────────────────────────────────────
+.kilo/
+
 # ─── Opcionales según stack ──────────────────────────────────
 # Si usas Poetry, NO ignores poetry.lock (debe versionarse).
 # Si usas Pipenv, NO ignores Pipfile.lock (debe versionarse).
