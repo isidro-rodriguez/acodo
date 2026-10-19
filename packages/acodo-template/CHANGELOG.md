@@ -5,6 +5,16 @@ Todos los cambios relevantes de `acodo-template` se documentan en este fichero.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el
 proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
+## [0.2.0] - 2026-10-19
+
+### Added
+
+- Configuración de publicación: `.gitattributes`, `.gitignore`, `.pre-commit-config.yaml`.
+- CI/CD con GitHub Actions: workflow `ci.yaml` y Dependabot en `.github/dependabot.yml`.
+- Documentación del agente: `AGENTS.md` con reglas del proyecto y comandos canónicos.
+- README actualizado con instrucciones de uso de la plantilla.
+- Configuración de IDE: `.idea/acodo.iml`.
+
 ## [0.1.0] - 2026-10-17
 
 ### Added

@@ -65,7 +65,7 @@ source = { editable = "packages/acodo-framework" }
 
 [[package]]
 name = "acodo-template"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "packages/acodo-template" }
 dependencies = [
     { name = "acodo-framework" },
