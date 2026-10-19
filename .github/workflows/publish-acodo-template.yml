@@ -16,15 +16,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.13'
 
       - name: Install build & tooling
         run: python -m pip install --upgrade pip build twine uv gh
 
-      - name:
-          Debug: list env & check secrets
+      - name: Debug - list env & check secrets
         run: |
           echo "GITHUB_REF=$GITHUB_REF"
           echo "Show secret keys presence:"
@@ -51,8 +50,7 @@ jobs:
       - name: Prepare TAG env
         run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
-      - name:
-          Debug: show dist artifacts
+      - name: Debug - show dist artifacts
         run: ls -la packages/acodo-template/dist || true
 
       - name: Authenticate gh CLI (for debug)
