@@ -56,6 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # crear tag y release
+      id-token: write # publicación de confianza en PyPI (OIDC), sin token
 
     steps:
       - name: Checkout
@@ -82,10 +83,9 @@ jobs:
       - name: Comprobar metadatos
         run: uvx twine check dist/*
 
+      # Trusted publisher configurado en PyPI para este repo y este workflow.
       - name: Publicar en PyPI
-        env:
-          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN_ACODO }}
-        run: uv publish dist/*
+        run: uv publish --trusted-publishing always dist/*
 
       - name: Crear tag y release en GitHub
         env:
