@@ -1,35 +1,73 @@
 # pyproject.toml
 [project]
 name = "acodo"
-version = "0.0.0"
-description = "Workspace raíz del framework modular Acodo (no publicado)."
+version = "0.3.0"
+description = "Utilidades puras del framework Acodo: validación, conversión, parseo y logger."
+readme = "README.md"
 requires-python = ">=3.13"
-
-
-# ---------------------------------------------------------------------------
-# uv: definición del workspace
-# ---------------------------------------------------------------------------
-[dependency-groups]
-dev = [
-    "mkdocstrings-python>=2.0.9",
-    "pre-commit>=4.7.0",
-    "pytest>=9.1.1",
-    "pytest-cov>=7.1.0",
-    "ruff>=0.17.1",
-    "ty>=0.0.89",
-    "zensical>=0.0.71",
+license = "MIT"
+license-files = ["LICENSE"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Typing :: Typed",
 ]
 
-[tool.uv]
-package = false
+# Sin dependencias en tiempo de ejecución: solo biblioteca estándar.
+dependencies = []
 
-[tool.uv.workspace]
-members = ["packages/*"]
+[project.urls]
+Changelog = "https://github.com/isidro-rodriguez/acodo/blob/main/CHANGELOG.md"
+Documentation = "https://isidro-rodriguez.github.io/acodo/"
+Repository = "https://github.com/isidro-rodriguez/acodo"
 
+[dependency-groups]
+dev = [
+  "mkdocstrings-python>=2.0.9",
+  "pre-commit>=4.7.0",
+  "pytest>=9.1.1",
+  "pytest-cov>=7.1.0",
+  "ruff>=0.17.1",
+  "ty>=0.0.89",
+  "zensical>=0.0.71",
+]
 
-# ---------------------------------------------------------------------------
-# Ruff: formato y linting (una sola configuración para todos los miembros)
-# ---------------------------------------------------------------------------
+[build-system]
+requires = ["uv_build>=0.11.7,<0.12.0"]
+build-backend = "uv_build"
+
+# --- Cobertura (pytest-cov) --------------------------------------------------
+[tool.coverage.run]
+source = ["src"]
+branch = true
+omit = [
+  "*/tests/*",
+  "*/__init__.py",
+]
+
+[tool.coverage.report]
+exclude_also = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "if __name__ == .__main__.:",
+]
+
+# --- pytest ------------------------------------------------------------------
+[tool.pytest.ini_options]
+addopts = ["-ra", "--strict-markers", "--import-mode=importlib", "--doctest-modules"]
+markers = [
+  "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+  "integration: marks tests as integration tests",
+]
+python_classes = ["Test*"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+testpaths = ["src", "tests"]
+
+# --- Ruff: formato y linting -------------------------------------------------
 [tool.ruff]
 line-length = 88
 target-version = "py313"
@@ -41,20 +79,17 @@ select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "C4", "PERF", "PTH", "RUF",
 convention = "google"
 
 [tool.ruff.lint.isort]
-known-first-party = ["acodo", "acodo_cli", "acodo_template"]
+known-first-party = ["acodo"]
 
 [tool.ruff.lint.per-file-ignores]
-"packages/*/tests/**" = ["D"]
+"tests/**" = ["D"]
 
-
-# -----------------------------------------------------------------------------
-# ty: comprobación de tipos de Astral
-# -----------------------------------------------------------------------------
+# --- ty: comprobación de tipos de Astral -------------------------------------
 [tool.ty.environment]
 python-version = "3.13"
 
 [tool.ty.src]
-include = ["packages/*/src", "packages/*/tests"]
+include = ["src", "tests"]
 
 [tool.ty.analysis]
 strict-equality-semantics = true
@@ -64,36 +99,5 @@ strict-generic-narrowing = true
 possibly-unresolved-reference = "error"
 unused-ignore-comment = "warn"
 
-
-# -----------------------------------------------------------------------------
-# pytest: configuración de tests (los doctests de los docstrings se ejecutan)
-# -----------------------------------------------------------------------------
-[tool.pytest.ini_options]
-testpaths = ["packages"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-addopts = ["-ra", "--strict-markers", "--import-mode=importlib", "--doctest-modules"]
-markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "integration: marks tests as integration tests",
-]
-
-
-# -----------------------------------------------------------------------------
-# Cobertura (pytest-cov)
-# -----------------------------------------------------------------------------
-[tool.coverage.run]
-source = ["packages"]
-branch = true
-omit = [
-    "*/tests/*",
-    "*/__init__.py",
-]
-
-[tool.coverage.report]
-exclude_also = [
-    "pragma: no cover",
-    "if TYPE_CHECKING:",
-    "if __name__ == .__main__.:",
-]
+[tool.uv.build-backend]
+module-name = "acodo"

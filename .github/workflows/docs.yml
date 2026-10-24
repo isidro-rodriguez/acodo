@@ -32,7 +32,7 @@ jobs:
           python-version-file: ".python-version"
 
       - name: Sincronizar dependencias
-        run: uv sync --all-packages --locked --dev
+        run: uv sync --locked
 
       - name: Construir documentación con Zensical
         run: uv run zensical build

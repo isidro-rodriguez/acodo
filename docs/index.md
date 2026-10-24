@@ -4,43 +4,23 @@ icon: lucide/leaf
 
 # Acodo
 
-**Acodo** es un framework Python para construir aplicaciones sin dependencias
-innecesarias. Cada paquete resuelve un problema concreto y se apoya en la biblioteca
-estándar siempre que es posible.
-
-## Paquetes
-
-| Paquete | Módulo | Qué ofrece |
-|---------|--------|------------|
-| `acodo-framework` | `acodo` | Utilidades puras: validación, conversión, parseo y logger. Sin dependencias externas. |
-| `acodo-cli` | `acodo_cli` | CLI de desarrollo construida con Typer (`uv run acodo`). |
-| `acodo-template` | `acodo_template` | Plantilla de proyecto que reúne las herramientas del framework. |
+**Acodo** es una biblioteca Python de utilidades puras —validación, conversión, parseo
+y logger— sin dependencias externas: solo usa la biblioteca estándar. Se instala y se importa
+como `acodo` (antes se publicaba como `acodo-framework`).
 
 ## Instalación
 
-El proyecto usa [uv](https://docs.astral.sh/uv/) y requiere Python 3.13 o superior.
+Requiere Python 3.13 o superior.
 
 ```bash
-uv add acodo-framework        # biblioteca (PyPI)
-uv add --dev acodo-cli        # CLI de desarrollo (PyPI)
+uv add acodo
 ```
-
-Para trabajar en el monorepo:
-
-```bash
-git clone https://github.com/isidro-rodriguez/acodo.git
-cd acodo
-uv sync --all-packages
-```
-
-Dentro del workspace, los miembros se enlazan entre sí con `[tool.uv.sources]` y
-`workspace = true`.
 
 ## Enlaces
 
 - Repositorio: <https://github.com/isidro-rodriguez/acodo>
 - Plantilla de proyecto: <https://github.com/isidro-rodriguez/acodo-template>
-- PyPI: [`acodo-framework`](https://pypi.org/project/acodo-framework/) · [`acodo-cli`](https://pypi.org/project/acodo-cli/)
+- PyPI: [`acodo`](https://pypi.org/project/acodo/)
 
 ## Uso básico
 
@@ -65,15 +45,6 @@ Las utilidades de `acodo.utils` se agrupan por prefijo:
 | `to_*`    | `Any \| None` | Convierten el tipo o devuelven `None` si no pueden. |
 | `valid_*` | `bool`        | Validan el formato o el dominio de un valor. |
 
-## Línea de comandos
-
-La CLI se ejecuta desde la raíz del workspace:
-
-```bash
-uv run acodo --help
-uv run acodo check    # formato, lint, tipos y tests con resumen final
-```
-
 ## Referencia de la API
 
 La [referencia de la API](api/acodo/index.md) se genera al construir a partir de los
@@ -84,9 +55,11 @@ docstrings, así que siempre refleja el código actual:
 
 ## Desarrollo
 
-Los comandos de calidad se ejecutan desde la raíz del workspace:
-
 ```bash
+git clone https://github.com/isidro-rodriguez/acodo.git
+cd acodo
+uv sync
+
 uv run ruff format .
 uv run ruff check .
 uv run ty check

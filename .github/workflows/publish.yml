@@ -1,16 +1,19 @@
-name: Publish acodo-cli to PyPI
+name: Publish acodo to PyPI
 
 # Se publica al subir a main un cambio en el paquete. La versión sale de su
-# `pyproject.toml`; si ya existe el tag `acodo-cli-vX.Y.Z` no se vuelve a publicar.
+# `pyproject.toml`; si ya existe el tag `vX.Y.Z` no se vuelve a publicar.
 on:
   push:
     branches: [ main ]
     paths:
-      - 'packages/acodo-cli/**'
+      - 'src/**'
+      - 'pyproject.toml'
+      - 'README.md'
+      - 'LICENSE'
   workflow_dispatch: { }
 
 concurrency:
-  group: publish-acodo-cli
+  group: publish-acodo
   cancel-in-progress: false
 
 jobs:
@@ -32,11 +35,11 @@ jobs:
         id: meta
         run: |
           set -euo pipefail
-          VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('packages/acodo-cli/pyproject.toml', 'rb'))['project']['version'])")
-          TAG="acodo-cli-v${VERSION}"
+          VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          TAG="v${VERSION}"
           if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" > /dev/null 2>&1; then
             EXISTS=true
-            echo "::warning::${TAG} ya existe: si has cambiado acodo-cli, sube la versión en su pyproject.toml."
+            echo "::warning::${TAG} ya existe: si has cambiado acodo, sube la versión en su pyproject.toml."
           else
             EXISTS=false
           fi
@@ -47,7 +50,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
   publish:
-    name: Construir y publicar acodo-cli ${{ needs.check.outputs.version }}
+    name: Construir y publicar acodo ${{ needs.check.outputs.version }}
     needs: check
     if: needs.check.outputs.exists == 'false'
     runs-on: ubuntu-latest
@@ -63,21 +66,25 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Sincronizar workspace
-        run: uv sync --all-packages
+      - name: Sincronizar dependencias
+        run: uv sync --locked
 
       - name: Comprobaciones de calidad
-        run: uv run --package acodo-cli acodo check
+        run: |
+          uv run ruff format --check .
+          uv run ruff check .
+          uv run ty check --error-on-warning
+          uv run pytest
 
-      - name: Construir acodo-cli
-        run: uv build --package acodo-cli
+      - name: Construir acodo
+        run: uv build
 
       - name: Comprobar metadatos
         run: uvx twine check dist/*
 
       - name: Publicar en PyPI
         env:
-          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN_ACODO_CLI }}
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN_ACODO }}
         run: uv publish dist/*
 
       - name: Crear tag y release en GitHub
@@ -86,5 +93,5 @@ jobs:
         run: |
           gh release create "${{ needs.check.outputs.tag }}" dist/* \
             --target "${GITHUB_SHA}" \
-            --title "acodo-cli ${{ needs.check.outputs.version }}" \
+            --title "acodo ${{ needs.check.outputs.version }}" \
             --generate-notes

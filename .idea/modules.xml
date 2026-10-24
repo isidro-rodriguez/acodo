@@ -3,9 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/acodo.iml" filepath="$PROJECT_DIR$/.idea/acodo.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/acodo-cli.iml" filepath="$PROJECT_DIR$/.idea/acodo-cli.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/acodo-framework.iml" filepath="$PROJECT_DIR$/.idea/acodo-framework.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/acodo-template.iml" filepath="$PROJECT_DIR$/.idea/acodo-template.iml" />
     </modules>
   </component>
 </project>

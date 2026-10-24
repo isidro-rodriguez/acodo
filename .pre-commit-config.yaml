@@ -1,5 +1,5 @@
 # .pre-commit-config.yaml
-# Configuración de pre-commit para el workspace acodo.
+# Configuración de pre-commit para acodo.
 # pre-commit: comprobaciones rápidas (formato, lint, tipos, tests sin cobertura).
 # pre-push:   además cobertura y, cuando exista, build de Zensical.
 # Todos los hooks son locales y usan `uv run`, así que las versiones de las
@@ -45,7 +45,7 @@ repos:
       # Suite completa con cobertura al hacer push.
       - id: pytest-cov
         name: pytest (con cobertura)
-        entry: uv run pytest --cov=packages --cov-report=term-missing
+        entry: uv run pytest --cov=src --cov-report=term-missing
         language: system
         pass_filenames: false
         always_run: true
@@ -57,6 +57,6 @@ repos:
         name: zensical (build de documentación)
         entry: uv run zensical build
         language: system
-        files: ^(zensical\.toml|mkdocs\.yml|docs/.+\.(md|css)|packages/.+/src/.+\.py)$
+        files: ^(zensical\.toml|mkdocs\.yml|docs/.+\.(md|css)|src/.+\.py)$
         pass_filenames: false
         stages: [ pre-push ]

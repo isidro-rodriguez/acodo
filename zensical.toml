@@ -21,7 +21,7 @@ extra_css = ["assets/stylesheets/acodo.css"]
 # Referencia de la API a partir de los docstrings (estilo Google).
 # Requiere `mkdocstrings-python` (grupo de desarrollo).
 [project.plugins.api-autonav]
-modules = ["packages/acodo-framework/src/acodo"]
+modules = ["src/acodo"]
 api_root_uri = "api"
 nav_section_title = "API"
 
@@ -30,7 +30,7 @@ locale = "es"
 custom_templates = "docs_templates"
 
 [project.plugins.mkdocstrings.handlers.python]
-paths = ["packages/acodo-framework/src"]
+paths = ["src"]
 
 [project.plugins.mkdocstrings.handlers.python.options]
 docstring_style = "google"
@@ -45,22 +45,22 @@ language = "es"
 favicon = "assets/images/favicon.png"
 logo = "assets/images/logo.png"
 features = [
-    "content.code.annotate",
-    "content.code.copy",
-    "content.code.select",
-    "content.footnote.tooltips",
-    "content.tabs.link",
-    "content.tooltips",
-    "navigation.footer",
-    "navigation.indexes",
-    "navigation.instant",
-    "navigation.instant.prefetch",
-    "navigation.path",
-    "navigation.sections",
-    "navigation.top",
-    "navigation.tracking",
-    "search.highlight",
-    "toc.follow",
+  "content.code.annotate",
+  "content.code.copy",
+  "content.code.select",
+  "content.footnote.tooltips",
+  "content.tabs.link",
+  "content.tooltips",
+  "navigation.footer",
+  "navigation.indexes",
+  "navigation.instant",
+  "navigation.instant.prefetch",
+  "navigation.path",
+  "navigation.sections",
+  "navigation.top",
+  "navigation.tracking",
+  "search.highlight",
+  "toc.follow",
 ]
 
 # Los colores reales (paleta Acodo) están en `docs/assets/stylesheets/acodo.css`.
@@ -88,31 +88,31 @@ toggle.icon = "lucide/moon"
 toggle.name = "Cambiar a la preferencia del sistema"
 
 [project.markdown_extensions]
-abbr = { }
-admonition = { }
-attr_list = { }
-def_list = { }
-footnotes = { }
-md_in_html = { }
+abbr = {}
+admonition = {}
+attr_list = {}
+def_list = {}
+footnotes = {}
+md_in_html = {}
 toc.permalink = true
 pymdownx.arithmatex.generic = true
-pymdownx.betterem = { }
-pymdownx.caret = { }
-pymdownx.details = { }
+pymdownx.betterem = {}
+pymdownx.caret = {}
+pymdownx.details = {}
 pymdownx.emoji.emoji_generator = "zensical.extensions.emoji.to_svg"
 pymdownx.emoji.emoji_index = "zensical.extensions.emoji.twemoji"
 pymdownx.highlight.anchor_linenums = true
 pymdownx.highlight.line_spans = "__span"
 pymdownx.highlight.pygments_lang_class = true
-pymdownx.inlinehilite = { }
-pymdownx.keys = { }
-pymdownx.magiclink = { }
-pymdownx.mark = { }
-pymdownx.smartsymbols = { }
+pymdownx.inlinehilite = {}
+pymdownx.keys = {}
+pymdownx.magiclink = {}
+pymdownx.mark = {}
+pymdownx.smartsymbols = {}
 pymdownx.superfences.custom_fences = [
-    { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+  { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
 ]
 pymdownx.tabbed.alternate_style = true
 pymdownx.tabbed.combine_header_slug = true
 pymdownx.tasklist.custom_checkbox = true
-pymdownx.tilde = { }
+pymdownx.tilde = {}

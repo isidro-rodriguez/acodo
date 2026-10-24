@@ -6,7 +6,7 @@ Requiere **Python >= 3.13** y no introduce dependencias.
 Uso rápido
 ----------
 
-Forma parte de `acodo-framework` y se importa desde `acodo.utils`:
+Forma parte de `acodo` y se importa desde `acodo.utils`:
 
 ```python
 from acodo.utils import get_hash, has_required_attrs, parse_slug, to_bytes, valid_email
