@@ -81,6 +81,10 @@ uv run ty check
 uv run pytest
 ```
 
+Optional shortcuts with Poe the Poet (global tool, not a project dependency; tasks in
+`[tool.poe]` of `pyproject.toml`): `poe check` (same as CI), `poe fix`, `poe cov`,
+`poe docs`, `poe docs-build`, `poe backup`.
+
 Documentation (Zensical, not MkDocs commands):
 
 ```bash
@@ -194,7 +198,7 @@ def sum_numbers(a: int, b: int) -> int:
 
 A task is done when:
 
-- `uv run acodo check` passes without errors (run from the workspace root).
+- `poe check` (or the four `uv run` commands above) passes without errors.
 - Documentation and README are updated if the API or usage changes.
 - Zensical still builds: `uv run zensical build` passes.
 - The affected member's version is bumped and its `CHANGELOG.md` is updated (required before push,

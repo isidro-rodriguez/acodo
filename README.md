@@ -60,6 +60,19 @@ uv run ty check
 uv run pytest
 ```
 
+Con [Poe the Poet](https://poethepoet.natn.io/) instalado globalmente
+(`uv tool install poethepoet`) hay atajos definidos en `pyproject.toml`; no es
+dependencia del proyecto. `poe` sin argumentos lista las tareas:
+
+| Tarea             | Qué hace                                             |
+|-------------------|------------------------------------------------------|
+| `poe check`       | Formato, lint, tipos y tests (lo mismo que la CI)    |
+| `poe fix`         | Aplica el formato y las correcciones de Ruff         |
+| `poe cov`         | Tests con informe de cobertura                       |
+| `poe docs`        | Vista previa local de la documentación               |
+| `poe docs-build`  | Construye la documentación en `site/`                |
+| `poe backup`      | Copia de seguridad con `git bundle` (`*.bundle`)     |
+
 Los hooks de `pre-commit` cubren formato, lint, tipos y tests; la etapa `pre-push` añade
 cobertura y la construcción de la documentación, que vive en `docs/` y se genera con
 [Zensical](https://zensical.org) (`uv run zensical serve` / `uv run zensical build`).

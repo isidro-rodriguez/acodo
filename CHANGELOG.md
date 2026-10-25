@@ -5,6 +5,16 @@ Todos los cambios relevantes de `acodo` (antes `acodo-framework`) se documentan 
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el
 proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
+## [Unreleased]
+
+### Added
+
+- Tareas de [Poe the Poet](https://poethepoet.natn.io/) en `pyproject.toml` (`check`, `fix`,
+  `cov`, `docs`, `docs-build` y `backup`), igual que en `acodo-template`. Son opcionales:
+  `poe` se instala como herramienta global y no es dependencia del proyecto.
+- `scripts/backup.py`: copia de seguridad del repositorio con `git bundle`; los `*.bundle`
+  quedan ignorados por git.
+
 ## [0.3.0] - 2026-10-24
 
 ### Changed

@@ -55,6 +55,43 @@ exclude_also = [
   "if __name__ == .__main__.:",
 ]
 
+# --- Poe the Poet (opcional) -------------------------------------------------
+# Atajos para quien tenga `poe` instalado globalmente (`uv tool install poethepoet`).
+# No es dependencia del proyecto: todo se puede ejecutar también con `uv run`.
+[tool.poe]
+executor.type = "uv"
+
+[tool.poe.tasks.check]
+help = "Formato, lint, tipos y tests (lo mismo que la CI)"
+sequence = [
+  "ruff format --check .",
+  "ruff check .",
+  "ty check",
+  "pytest",
+]
+default_item_type = "cmd"
+
+[tool.poe.tasks.fix]
+help = "Aplica el formato y las correcciones automáticas de Ruff"
+sequence = ["ruff format .", "ruff check --fix ."]
+default_item_type = "cmd"
+
+[tool.poe.tasks.cov]
+help = "Tests con informe de cobertura"
+cmd = "pytest --cov=src --cov-report=term-missing"
+
+[tool.poe.tasks.docs]
+help = "Vista previa local de la documentación (Zensical)"
+cmd = "zensical serve"
+
+[tool.poe.tasks.docs-build]
+help = "Construye la documentación en site/"
+cmd = "zensical build"
+
+[tool.poe.tasks.backup]
+help = "Copia de seguridad del repositorio con git bundle"
+cmd = "python scripts/backup.py"
+
 # --- pytest ------------------------------------------------------------------
 [tool.pytest.ini_options]
 addopts = ["-ra", "--strict-markers", "--import-mode=importlib", "--doctest-modules"]

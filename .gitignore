@@ -96,6 +96,9 @@ celerybeat.pid
 docs/_build/
 /site
 
+# Copias de seguridad (poe backup)
+*.bundle
+
 # Jupyter / IPython
 .ipynb_checkpoints/
 profile_default/
