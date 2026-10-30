@@ -7,8 +7,20 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-30
+
 ### Added
 
+- `to_network`: convierte un texto en notación CIDR (`192.168.1.0/24`, `fd00::/8`) a
+  `IPv4Network`/`IPv6Network`, o `None`. Exige prefijo; con `strict=True` rechaza los
+  bits de host activos.
+- `valid_cidr(raw, version=None, strict=False)`: valida redes CIDR IPv4/IPv6. `version`
+  admite `4`, `6` o `None` (otro valor lanza `ValueError`, como `valid_ip`).
+- `valid_int(raw, minimum=None, maximum=None)`: valida enteros con las reglas de `to_int`
+  y límites inclusivos opcionales; lanza `ValueError` si `minimum > maximum`.
+- `valid_path(raw, absolute=False, exists=False)`: valida rutas con las reglas de
+  `to_path`. `absolute` se evalúa sobre el texto sin expandir `~` (debe empezar por `/`),
+  para que `~/x` no dependa del usuario que ejecuta; `exists` exige que la ruta exista.
 - Tareas de [Poe the Poet](https://poethepoet.natn.io/) en `pyproject.toml` (`check`, `fix`,
   `cov`, `docs`, `docs-build` y `backup`), igual que en `acodo-template`. Son opcionales:
   `poe` se instala como herramienta global y no es dependencia del proyecto.
