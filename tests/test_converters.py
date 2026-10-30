@@ -4,6 +4,7 @@ import pathlib
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from decimal import Decimal
+from ipaddress import IPv4Network, IPv6Network
 
 import pytest
 
@@ -220,6 +221,31 @@ def test_to_int(raw: object, expected: int | None) -> None:
 )
 def test_to_list(raw: object, expected: list | None) -> None:
     assert iu.to_list(raw) == expected
+
+
+@pytest.mark.parametrize(
+    ("raw", "strict", "expected"),
+    [
+        ("192.168.1.0/24", False, IPv4Network("192.168.1.0/24")),
+        (" 10.0.0.0/8 ", False, IPv4Network("10.0.0.0/8")),
+        ("192.168.1.5/24", False, IPv4Network("192.168.1.0/24")),
+        ("192.168.1.5/24", True, None),
+        ("fd00::/8", False, IPv6Network("fd00::/8")),
+        ("2001:db8::1/64", True, None),
+        ("10.0.0.1", False, None),
+        ("300.0.0.0/8", False, None),
+        ("10.0.0.0/33", False, None),
+        ("10.0.0.0/", False, None),
+        ("/24", False, None),
+        ("   ", False, None),
+        ("", False, None),
+        (None, False, None),
+    ],
+)
+def test_to_network(
+    raw: str | None, strict: bool, expected: IPv4Network | IPv6Network | None
+) -> None:
+    assert iu.to_network(raw, strict=strict) == expected
 
 
 class TestToPath:

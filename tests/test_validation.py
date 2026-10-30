@@ -1,5 +1,7 @@
 """Tests de las validaciones (`valid_*`)."""
 
+import pathlib
+
 import pytest
 
 import acodo.utils as iu
@@ -217,6 +219,40 @@ def test_valid_iban(raw: str, expected: bool) -> None:
 
 
 @pytest.mark.parametrize(
+    ("raw", "minimum", "maximum", "expected"),
+    [
+        ("42", None, None, True),
+        (" -7 ", None, None, True),
+        ("3.5", None, None, False),
+        ("1_000", None, None, False),
+        ("abc", None, None, False),
+        ("", None, None, False),
+        ("0", 1, None, False),
+        ("1", 1, None, True),
+        ("10", None, 10, True),
+        ("11", None, 10, False),
+        ("8192", 512, 131072, True),
+        ("511", 512, 131072, False),
+        ("131073", 512, 131072, False),
+        ("5", 5, 5, True),
+    ],
+)
+def test_valid_int(
+    raw: str, minimum: int | None, maximum: int | None, expected: bool
+) -> None:
+    assert iu.valid_int(raw, minimum, maximum) is expected
+
+
+def test_valid_int_rejects_bool() -> None:
+    assert iu.valid_int(True) is False  # ty: ignore[invalid-argument-type]
+
+
+def test_valid_int_invalid_range() -> None:
+    with pytest.raises(ValueError, match="minimum"):
+        iu.valid_int("5", 10, 1)
+
+
+@pytest.mark.parametrize(
     ("raw", "version", "expected"),
     [
         ("192.168.1.1", None, True),
@@ -353,6 +389,33 @@ class TestValidPassword:
 
 
 @pytest.mark.parametrize(
+    ("raw", "absolute", "expected"),
+    [
+        ("/etc/hosts", True, True),
+        ("/", True, True),
+        ("rel/ativa", False, True),
+        ("rel/ativa", True, False),
+        ("~/x", False, True),
+        ("~/x", True, False),
+        ("   ", False, False),
+        ("", False, False),
+        ("a\0b", False, False),
+    ],
+)
+def test_valid_path(raw: str, absolute: bool, expected: bool) -> None:
+    assert iu.valid_path(raw, absolute=absolute) is expected
+
+
+def test_valid_path_exists(tmp_path: pathlib.Path) -> None:
+    existing = tmp_path / "fichero.txt"
+    existing.write_text("x", encoding="utf-8")
+    assert iu.valid_path(str(existing), exists=True) is True
+    assert iu.valid_path(str(tmp_path), exists=True) is True
+    assert iu.valid_path(str(tmp_path / "no-existe"), exists=True) is False
+    assert iu.valid_path(str(tmp_path / "no-existe")) is True
+
+
+@pytest.mark.parametrize(
     ("raw", "expected"),
     [
         ("+34 612 345 678", True),
@@ -462,6 +525,35 @@ def test_valid_uuid(raw: str, expected: bool) -> None:
 )
 def test_valid_cif(raw: str, expected: bool) -> None:
     assert iu.valid_cif(raw) is expected
+
+
+@pytest.mark.parametrize(
+    ("raw", "version", "strict", "expected"),
+    [
+        ("192.168.1.0/24", None, False, True),
+        ("192.168.1.5/24", None, False, True),
+        ("192.168.1.5/24", None, True, False),
+        ("192.168.1.0/24", 4, True, True),
+        ("10.0.0.1", None, False, False),
+        ("fd00::/8", None, False, True),
+        ("fd00::/8", 6, True, True),
+        ("fd00::/8", 4, False, False),
+        ("2001:db8::1/64", 6, True, False),
+        ("10.0.0.0/8", 6, False, False),
+        ("300.0.0.0/8", None, False, False),
+        ("10.0.0.0/33", None, False, False),
+        ("", None, False, False),
+    ],
+)
+def test_valid_cidr(
+    raw: str, version: int | None, strict: bool, expected: bool
+) -> None:
+    assert iu.valid_cidr(raw, version, strict) is expected
+
+
+def test_valid_cidr_invalid_version() -> None:
+    with pytest.raises(ValueError, match="version"):
+        iu.valid_cidr("10.0.0.0/8", 5)
 
 
 @pytest.mark.parametrize(

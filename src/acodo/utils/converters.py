@@ -13,6 +13,7 @@ from dataclasses import asdict, is_dataclass
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from email.utils import parsedate_to_datetime
+from ipaddress import IPv4Network, IPv6Network, ip_network
 from json import loads
 from os import fspath
 from pathlib import Path
@@ -447,6 +448,41 @@ def to_list(raw: object) -> list[Any] | None:
         True
     """
     return list(_flatten(raw)) or None
+
+
+def to_network(
+    raw: str | None, strict: bool = False
+) -> IPv4Network | IPv6Network | None:
+    """Convierte un texto en notación CIDR a red IPv4 o IPv6.
+
+    El texto debe llevar prefijo (`/`); se ignoran los espacios de los extremos.
+
+    Args:
+        raw: Texto a convertir (por ejemplo, `"192.168.1.0/24"`).
+        strict: Si es `True`, rechaza las redes con bits de host activos
+            (`"192.168.1.5/24"`).
+
+    Returns:
+        La red, o `None` si el valor falta, está en blanco, no lleva prefijo o
+        no es válido.
+
+    Examples:
+        >>> to_network("192.168.1.0/24")
+        IPv4Network('192.168.1.0/24')
+        >>> to_network("192.168.1.5/24")
+        IPv4Network('192.168.1.0/24')
+        >>> to_network("192.168.1.5/24", strict=True) is None
+        True
+        >>> to_network("10.0.0.1") is None
+        True
+    """
+    if raw is None or "/" not in raw:
+        return None
+
+    try:
+        return ip_network(raw.strip(), strict=strict)
+    except ValueError:
+        return None
 
 
 def to_path(raw: str | PathLike[str] | None) -> Path | None:

@@ -22,6 +22,9 @@ from .converters import (
     to_bool,
     to_date,
     to_datetime,
+    to_int,
+    to_network,
+    to_path,
     to_port,
     to_timedelta,
 )
@@ -137,6 +140,43 @@ def valid_bool(raw: str) -> bool:
         False
     """
     return to_bool(raw) is not None
+
+
+def valid_cidr(raw: str, version: int | None = None, strict: bool = False) -> bool:
+    """Comprueba si el string es una red IPv4 o IPv6 en notación CIDR.
+
+    Se apoya en `to_network`: exige prefijo (`/`).
+
+    Args:
+        raw: String a validar.
+        version: `4` o `6` para exigir esa versión; `None` admite ambas.
+        strict: Si es `True`, rechaza las redes con bits de host activos.
+
+    Returns:
+        `True` si es una red CIDR válida (de la versión indicada).
+
+    Raises:
+        ValueError: Si `version` no es `None`, `4` ni `6`.
+
+    Examples:
+        >>> valid_cidr("192.168.1.0/24")
+        True
+        >>> valid_cidr("192.168.1.5/24")
+        True
+        >>> valid_cidr("192.168.1.5/24", strict=True)
+        False
+        >>> valid_cidr("10.0.0.1")
+        False
+        >>> valid_cidr("fd00::/8", version=4)
+        False
+        >>> valid_cidr("300.0.0.0/8")
+        False
+    """
+    if version not in (None, 4, 6):
+        raise ValueError("`version` debe ser None, 4 o 6.")
+
+    network = to_network(raw, strict=strict)
+    return network is not None and (version is None or network.version == version)
 
 
 def valid_cif(raw: str) -> bool:
@@ -379,6 +419,44 @@ def valid_iban(raw: str) -> bool:
     return int("".join(str(int(char, 36)) for char in rearranged)) % 97 == 1
 
 
+def valid_int(raw: str, minimum: int | None = None, maximum: int | None = None) -> bool:
+    """Comprueba si el string lo aceptaría `to_int`, opcionalmente en un rango.
+
+    Hereda las reglas de `to_int`: rechaza `bool`, los guiones bajos (`"1_000"`)
+    y los decimales.
+
+    Args:
+        raw: String a validar.
+        minimum: Valor mínimo admitido (inclusivo); `None` sin límite.
+        maximum: Valor máximo admitido (inclusivo); `None` sin límite.
+
+    Returns:
+        `True` si es un entero dentro de los límites indicados.
+
+    Raises:
+        ValueError: Si `minimum` es mayor que `maximum`.
+
+    Examples:
+        >>> valid_int("42")
+        True
+        >>> valid_int("3.5")
+        False
+        >>> valid_int("0", minimum=1)
+        False
+        >>> valid_int("8192", 512, 131072)
+        True
+    """
+    if minimum is not None and maximum is not None and minimum > maximum:
+        raise ValueError("`minimum` no puede ser mayor que `maximum`.")
+
+    value = to_int(raw)
+    if value is None:
+        return False
+    return (minimum is None or value >= minimum) and (
+        maximum is None or value <= maximum
+    )
+
+
 def valid_ip(raw: str, version: int | None = None) -> bool:
     """Comprueba si el string es una dirección IPv4 o IPv6 válida.
 
@@ -613,6 +691,39 @@ def valid_password(
         return False
 
     return set(raw) <= _allowed_chars(special_characters, allow_uppercase, only_digits)
+
+
+def valid_path(raw: str, absolute: bool = False, exists: bool = False) -> bool:
+    """Comprueba si el string lo aceptaría `to_path`.
+
+    `absolute` se evalúa sobre el texto tal cual, sin expandir `~`: debe
+    empezar por `/`. Así `~/x` no cuenta como absoluta, porque al expandirse
+    depende del usuario que ejecuta (como `root` acabaría en `/root`).
+
+    Args:
+        raw: String a validar.
+        absolute: Si es `True`, exige que el texto empiece por `/`.
+        exists: Si es `True`, exige que la ruta exista (tras expandir `~`).
+
+    Returns:
+        `True` si es una ruta válida que cumple las condiciones indicadas.
+
+    Examples:
+        >>> valid_path("/etc/hosts", absolute=True)
+        True
+        >>> valid_path("rel/ativa", absolute=True)
+        False
+        >>> valid_path("~/x", absolute=True)
+        False
+        >>> valid_path("   ")
+        False
+    """
+    path = to_path(raw)
+    if path is None:
+        return False
+    if absolute and not raw.startswith("/"):
+        return False
+    return not exists or path.exists()
 
 
 def valid_phone(raw: str) -> bool:

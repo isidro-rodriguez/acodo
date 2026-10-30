@@ -47,7 +47,8 @@ Solo se lanza `ValueError` ante argumentos ambiguos o inválidos:
 
 - `get_*` (algoritmo, rango, longitud...)
 - `parse_*` (`lang`),
-- `valid_ip` (`version`)
+- `valid_cidr` y `valid_ip` (`version`),
+- `valid_int` (`minimum` mayor que `maximum`),
 - `valid_password`.
 
 
@@ -100,6 +101,9 @@ from .converters import (
 )
 from .converters import (
     to_list as to_list,
+)
+from .converters import (
+    to_network as to_network,
 )
 from .converters import (
     to_path as to_path,
@@ -181,6 +185,9 @@ from .validators import (
     valid_bool as valid_bool,
 )
 from .validators import (
+    valid_cidr as valid_cidr,
+)
+from .validators import (
     valid_cif as valid_cif,
 )
 from .validators import (
@@ -211,6 +218,9 @@ from .validators import (
     valid_iban as valid_iban,
 )
 from .validators import (
+    valid_int as valid_int,
+)
+from .validators import (
     valid_ip as valid_ip,
 )
 from .validators import (
@@ -230,6 +240,9 @@ from .validators import (
 )
 from .validators import (
     valid_password as valid_password,
+)
+from .validators import (
+    valid_path as valid_path,
 )
 from .validators import (
     valid_phone as valid_phone,
