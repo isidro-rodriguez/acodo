@@ -7,6 +7,23 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-03
+
+### Added
+
+- `valid_relative_path(raw)`: valida rutas relativas seguras en cualquier SO (sin
+  rutas absolutas, unidades, `~` ni `..`; cada segmento cumple `valid_filename`), para
+  rutas de configuración que deben quedar dentro de una carpeta base.
+- `has_only_keys(raw, allowed_keys)`: comprueba que un diccionario no tiene llaves fuera
+  de las permitidas; complementa a `has_required_keys` para detectar erratas en
+  configuraciones.
+
+### Fixed
+
+- `valid_path(absolute=True)` reconoce las rutas absolutas de Windows (`C:\…`, `C:/…`,
+  UNC). Antes solo aceptaba las que empiezan por `/`, lo que rechazaba cualquier ruta de
+  Windows. La comprobación sigue siendo textual e independiente del SO.
+
 ## [0.4.0] - 2026-10-30
 
 ### Added
