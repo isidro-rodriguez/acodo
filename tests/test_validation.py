@@ -400,6 +400,11 @@ class TestValidPassword:
         ("   ", False, False),
         ("", False, False),
         ("a\0b", False, False),
+        ("D:\\x", True, True),
+        ("D:/x", True, True),
+        ("\\\\srv\\share\\x", True, True),
+        ("C:x", True, False),
+        ("\\x", True, False),
     ],
 )
 def test_valid_path(raw: str, absolute: bool, expected: bool) -> None:

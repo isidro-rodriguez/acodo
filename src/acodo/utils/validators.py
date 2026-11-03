@@ -15,6 +15,7 @@ import string
 from functools import cache
 from ipaddress import ip_address
 from json import loads
+from pathlib import PureWindowsPath
 from urllib.parse import urlparse
 
 from .converters import (
@@ -693,16 +694,24 @@ def valid_password(
     return set(raw) <= _allowed_chars(special_characters, allow_uppercase, only_digits)
 
 
-def valid_path(raw: str, absolute: bool = False, exists: bool = False) -> bool:
-    """Comprueba si el string lo aceptaría `to_path`.
+def _is_absolute_text(raw: str) -> bool:
+    r"""Ruta absoluta POSIX (`/…`) o de Windows (`C:\…`, `C:/…`, UNC)."""
+    return raw.startswith("/") or PureWindowsPath(raw).is_absolute()
 
-    `absolute` se evalúa sobre el texto tal cual, sin expandir `~`: debe
-    empezar por `/`. Así `~/x` no cuenta como absoluta, porque al expandirse
-    depende del usuario que ejecuta (como `root` acabaría en `/root`).
+
+def valid_path(raw: str, absolute: bool = False, exists: bool = False) -> bool:
+    r"""Comprueba si el string lo aceptaría `to_path`.
+
+    `absolute` se evalúa sobre el texto tal cual, sin expandir `~` y sin
+    depender del SO: vale una ruta POSIX (`/…`), una unidad de Windows con raíz
+    (`C:\…`, `C:/…`) o una ruta UNC (`\\servidor\recurso`). Así `~/x` no
+    cuenta como absoluta, porque al expandirse depende del usuario que ejecuta
+    (como `root` acabaría en `/root`); tampoco `C:x` ni `\x`, que son relativas
+    a una unidad.
 
     Args:
         raw: String a validar.
-        absolute: Si es `True`, exige que el texto empiece por `/`.
+        absolute: Si es `True`, exige que el texto sea una ruta absoluta.
         exists: Si es `True`, exige que la ruta exista (tras expandir `~`).
 
     Returns:
@@ -710,6 +719,8 @@ def valid_path(raw: str, absolute: bool = False, exists: bool = False) -> bool:
 
     Examples:
         >>> valid_path("/etc/hosts", absolute=True)
+        True
+        >>> valid_path(r"D:\Desarrollo", absolute=True)
         True
         >>> valid_path("rel/ativa", absolute=True)
         False
@@ -721,7 +732,7 @@ def valid_path(raw: str, absolute: bool = False, exists: bool = False) -> bool:
     path = to_path(raw)
     if path is None:
         return False
-    if absolute and not raw.startswith("/"):
+    if absolute and not _is_absolute_text(raw):
         return False
     return not exists or path.exists()
 
