@@ -460,6 +460,33 @@ def test_valid_port(raw: str, expected: bool) -> None:
 @pytest.mark.parametrize(
     ("raw", "expected"),
     [
+        ("a", True),
+        ("a/b.txt", True),
+        ("a\\b.txt", True),
+        ("./a", True),
+        ("a//b/", True),
+        ("", False),
+        (".", False),
+        ("/a", False),
+        ("\\a", False),
+        ("C:x", False),
+        ("C:/x", False),
+        ("\\\\srv\\share", False),
+        ("~/x", False),
+        ("../a", False),
+        ("a/../b", False),
+        ("a/CON.txt", False),
+        ("a/b.", False),
+        ("a\0b", False),
+    ],
+)
+def test_valid_relative_path(raw: str, expected: bool) -> None:
+    assert iu.valid_relative_path(raw) is expected
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
         ("hola-mundo", True),
         ("a", True),
         ("a1-b2", True),

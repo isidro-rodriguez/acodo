@@ -17,6 +17,33 @@ if TYPE_CHECKING:
 # =============================================================================
 
 
+def has_only_keys(
+    raw: Mapping[Hashable, Any],
+    allowed_keys: Iterable[Hashable],
+) -> bool:
+    """Comprueba que el diccionario no tiene llaves fuera de las permitidas.
+
+    Complementa a `has_required_keys`: sirve para detectar erratas en un
+    fichero de configuración. Para el mensaje de error, las llaves sobrantes
+    se obtienen con `set(raw) - set(allowed_keys)`.
+
+    Args:
+        raw: Diccionario a verificar.
+        allowed_keys: Llaves permitidas (pueden faltar en `raw`).
+
+    Returns:
+        `True` si todas las llaves de `raw` están permitidas.
+
+    Examples:
+        >>> has_only_keys({"name": "Ana"}, ["name", "age"])
+        True
+        >>> has_only_keys({"name": "Ana", "nmae": "x"}, ["name", "age"])
+        False
+    """
+    allowed = set(allowed_keys)
+    return all(key in allowed for key in raw)
+
+
 def has_required_attrs(raw: object, required_attrs: Iterable[str]) -> bool:
     """Comprueba que el objeto tiene todos los atributos requeridos.
 

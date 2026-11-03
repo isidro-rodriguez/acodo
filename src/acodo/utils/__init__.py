@@ -64,6 +64,9 @@ Enlaces de interés
 """  # noqa: E501
 
 from .checkers import (
+    has_only_keys as has_only_keys,
+)
+from .checkers import (
     has_required_attrs as has_required_attrs,
 )
 from .checkers import (
@@ -252,6 +255,9 @@ from .validators import (
 )
 from .validators import (
     valid_postal_code as valid_postal_code,
+)
+from .validators import (
+    valid_relative_path as valid_relative_path,
 )
 from .validators import (
     valid_slug as valid_slug,

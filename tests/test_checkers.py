@@ -3,6 +3,13 @@
 import acodo.utils as iu
 
 
+def test_has_only_keys() -> None:
+    assert iu.has_only_keys({}, ["a"])
+    assert iu.has_only_keys({"a": 1}, ["a", "b"])
+    assert not iu.has_only_keys({"a": 1, "c": 3}, ["a", "b"])
+    assert iu.has_only_keys({"a": 1, "b": 2}, (key for key in ["a", "b"]))
+
+
 def test_has_required_attrs() -> None:
     assert iu.has_required_attrs("texto", ["upper", "lower"])
     assert iu.has_required_attrs("texto", [])

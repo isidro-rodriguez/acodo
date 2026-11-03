@@ -93,6 +93,8 @@ _CIF_RE = re.compile(r"[ABCDEFGHJNPQRSUVW][0-9]{7}[0-9A-J]")
 
 _POSTAL_CODE_RE = re.compile(r"(?:0[1-9]|[1-4][0-9]|5[0-2])[0-9]{3}")
 
+_PATH_SEPARATORS_RE = re.compile(r"[\\/]")
+
 
 def _dni_letter(number: int) -> str:
     # Letra de control de DNI/NIE.
@@ -806,6 +808,40 @@ def valid_postal_code(raw: str) -> bool:
         False
     """
     return _POSTAL_CODE_RE.fullmatch(raw) is not None
+
+
+def valid_relative_path(raw: str) -> bool:
+    r"""Comprueba si el string es una ruta relativa segura en cualquier SO.
+
+    Pensada para rutas de configuración que deben quedar dentro de una carpeta
+    base: no admite rutas absolutas (POSIX o Windows), unidades, `~` ni `..`.
+    Acepta `/` y `\` como separadores; cada segmento debe cumplir
+    `valid_filename`.
+
+    Args:
+        raw: String a validar.
+
+    Returns:
+        `True` si es una ruta relativa que no sale de su carpeta base.
+
+    Examples:
+        >>> valid_relative_path("eval/cte-v2.jsonl")
+        True
+        >>> valid_relative_path(r"01_edificacion\DBSI.pdf")
+        True
+        >>> valid_relative_path("../fuera")
+        False
+        >>> valid_relative_path("C:/x")
+        False
+        >>> valid_relative_path("~/x")
+        False
+    """
+    if not raw or "\0" in raw or raw.startswith(("/", "\\", "~")):
+        return False
+    if PureWindowsPath(raw).drive:
+        return False
+    parts = [part for part in _PATH_SEPARATORS_RE.split(raw) if part not in {"", "."}]
+    return bool(parts) and all(part != ".." and valid_filename(part) for part in parts)
 
 
 def valid_slug(raw: str) -> bool:
