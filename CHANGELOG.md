@@ -7,6 +7,15 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-11-03
+
+### Fixed
+
+- `has_only_keys` y `has_required_keys` son genéricas en el tipo de llave
+  (`Mapping[K, Any]`, `Iterable[K]`). Antes declaraban `Mapping[Hashable, Any]` y, como
+  `Mapping` es invariante en la llave, los comprobadores de tipos rechazaban un
+  `dict[str, Any]` y obligaban al llamador a usar `cast`. El comportamiento no cambia.
+
 ## [0.5.0] - 2026-11-03
 
 ### Added

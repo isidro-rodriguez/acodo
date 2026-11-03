@@ -5,10 +5,11 @@ Las funciones `has_*` devuelven `bool`.
 
 from __future__ import annotations
 
+from collections.abc import Hashable
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Collection, Hashable, Iterable, Mapping
+    from collections.abc import Collection, Iterable, Mapping
     from typing import Any
 
 
@@ -17,9 +18,9 @@ if TYPE_CHECKING:
 # =============================================================================
 
 
-def has_only_keys(
-    raw: Mapping[Hashable, Any],
-    allowed_keys: Iterable[Hashable],
+def has_only_keys[K: Hashable](
+    raw: Mapping[K, Any],
+    allowed_keys: Iterable[K],
 ) -> bool:
     """Comprueba que el diccionario no tiene llaves fuera de las permitidas.
 
@@ -85,9 +86,9 @@ def has_required_fields(
     return all(field in raw for field in required_fields)
 
 
-def has_required_keys(
-    raw: Mapping[Hashable, Any],
-    required_keys: Iterable[Hashable],
+def has_required_keys[K: Hashable](
+    raw: Mapping[K, Any],
+    required_keys: Iterable[K],
 ) -> bool:
     """Comprueba que el diccionario tiene todas las llaves requeridas.
 
