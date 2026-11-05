@@ -40,7 +40,7 @@ jobs:
       # Solo se publica desde main; en las pull requests basta con que compile.
       - name: Subir el sitio como artefacto de Pages
         if: github.event_name == 'push'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: site
 
