@@ -13,7 +13,8 @@ repo_name = "isidro-rodriguez/acodo"
 copyright = "Copyright &copy; 2026 isidro-rodriguez · Licencia MIT"
 docs_dir = "docs"
 site_dir = "site"
-extra_css = ["assets/stylesheets/acodo.css"]
+# typography.css (común) primero; acodo.css (propio) la puede pisar.
+extra_css = ["assets/stylesheets/typography.css", "assets/stylesheets/acodo.css"]
 
 # Sin `nav`: el menú se deduce de la estructura de `docs/`; la API la añade el
 # plugin `api-autonav` al construir.
@@ -42,8 +43,12 @@ show_source = true
 
 [project.theme]
 language = "es"
-favicon = "assets/images/favicon.png"
+# Plantillas propias: favicons y manifiesto web (`docs_templates/main.html`).
+custom_dir = "docs_templates"
+favicon = "assets/favicon/favicon-32x32.png"
 logo = "assets/images/logo.png"
+# Fuentes servidas desde el sitio (assets/fonts, typography.css), sin Google Fonts.
+font = false
 features = [
   "content.code.annotate",
   "content.code.copy",
@@ -86,6 +91,10 @@ primary = "custom"
 accent = "custom"
 toggle.icon = "lucide/moon"
 toggle.name = "Cambiar a la preferencia del sistema"
+
+[project.extra]
+# Color de la barra del navegador (docs_templates/main.html) y del manifiesto.
+theme_color = "#2e7d32"
 
 [project.markdown_extensions]
 abbr = {}
