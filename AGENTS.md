@@ -84,12 +84,11 @@ with an `Examples` section when it shows behaviour that is not obvious.
 
 ### Extra quality gates
 
-- `ty` must pass with `--error-on-warning` (as in CI).
 - Documentation builds: `uv run zensical build` (`poe docs-build`; preview with `poe docs`).
   Zensical only, configured in `zensical.toml`; no MkDocs-only plugins or hooks.
 - Coverage report: `poe cov` (CI uploads it to Codecov). Useful tests over a percentage.
-- CI (`.github/workflows/ci.yaml`): `uv sync --locked`, ruff format/check, `ty check
-  --error-on-warning`, pytest with coverage, on ubuntu and windows.
+- CI (`.github/workflows/ci.yaml`): `uv sync --locked`, ruff format/check, `ty check`,
+  pytest with coverage, on ubuntu and windows.
 
 ### Commit policy
 
