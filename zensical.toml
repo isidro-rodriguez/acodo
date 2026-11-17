@@ -13,8 +13,7 @@ repo_name = "isidro-rodriguez/acodo"
 copyright = "Copyright &copy; 2026 isidro-rodriguez · Licencia MIT"
 docs_dir = "docs"
 site_dir = "site"
-# typography.css (común) primero; acodo.css (propio) la puede pisar.
-extra_css = ["assets/stylesheets/typography.css", "assets/stylesheets/acodo.css"]
+extra_css = ["assets/stylesheets/acodo.css"]
 
 # Sin `nav`: el menú se deduce de la estructura de `docs/`; la API la añade el
 # plugin `api-autonav` al construir.
@@ -47,8 +46,6 @@ language = "es"
 custom_dir = "docs_templates"
 favicon = "assets/favicon/favicon-32x32.png"
 logo = "assets/images/logo.png"
-# Fuentes servidas desde el sitio (assets/fonts, typography.css), sin Google Fonts.
-font = false
 features = [
   "content.code.annotate",
   "content.code.copy",
