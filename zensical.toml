@@ -6,14 +6,12 @@
 site_name = "Acodo"
 site_description = "Framework Python modular sin dependencias innecesarias."
 site_author = "isidro-rodriguez"
-# GitHub Pages del repositorio (necesario para la navegación instantánea).
 site_url = "https://isidro-rodriguez.github.io/acodo/"
 repo_url = "https://github.com/isidro-rodriguez/acodo"
 repo_name = "isidro-rodriguez/acodo"
 copyright = "Copyright &copy; 2026 isidro-rodriguez · Licencia MIT"
 docs_dir = "docs"
 site_dir = "site"
-extra_css = ["assets/stylesheets/acodo.css"]
 
 # Sin `nav`: el menú se deduce de la estructura de `docs/`; la API la añade el
 # plugin `api-autonav` al construir.
@@ -41,57 +39,16 @@ show_signature_annotations = true
 show_source = true
 
 [project.theme]
-language = "es"
-# Plantillas propias: favicons y manifiesto web (`docs_templates/main.html`).
-custom_dir = "docs_templates"
-favicon = "assets/favicon/favicon-32x32.png"
+# Tema común de las webs: https://isidro-rodriguez.github.io/techsical/
+# Trae idioma, fuentes, funciones, paleta clara/oscura, favicons y manifiesto.
+name = "techsical"
 logo = "assets/images/logo.png"
-features = [
-  "content.code.annotate",
-  "content.code.copy",
-  "content.code.select",
-  "content.footnote.tooltips",
-  "content.tabs.link",
-  "content.tooltips",
-  "navigation.footer",
-  "navigation.indexes",
-  "navigation.instant",
-  "navigation.instant.prefetch",
-  "navigation.path",
-  "navigation.sections",
-  "navigation.top",
-  "navigation.tracking",
-  "search.highlight",
-  "toc.follow",
-]
 
-# Los colores reales (paleta Acodo) están en `docs/assets/stylesheets/acodo.css`.
-[[project.theme.palette]]
-media = "(prefers-color-scheme)"
-primary = "custom"
-accent = "custom"
-toggle.icon = "lucide/sun-moon"
-toggle.name = "Cambiar a modo claro"
-
-[[project.theme.palette]]
-media = "(prefers-color-scheme: light)"
-scheme = "default"
-primary = "custom"
-accent = "custom"
-toggle.icon = "lucide/sun"
-toggle.name = "Cambiar a modo oscuro"
-
-[[project.theme.palette]]
-media = "(prefers-color-scheme: dark)"
-scheme = "slate"
-primary = "custom"
-accent = "custom"
-toggle.icon = "lucide/moon"
-toggle.name = "Cambiar a la preferencia del sistema"
-
-[project.extra]
-# Color de la barra del navegador (docs_templates/main.html) y del manifiesto.
-theme_color = "#2e7d32"
+[project.extra.techsical]
+# Paleta de Acodo. Opciones: https://isidro-rodriguez.github.io/techsical/guia/personalizacion/
+primary = "#2e7d32"       # verde
+primary_dark = "#66bb6a"  # verde claro en modo oscuro
+accent = "#bf360c"        # naranja oscuro (el #e65100 no llega a 4,5:1 sobre blanco)
 
 [project.markdown_extensions]
 abbr = {}
