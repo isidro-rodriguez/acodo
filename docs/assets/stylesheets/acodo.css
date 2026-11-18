@@ -54,16 +54,3 @@
 [data-md-color-scheme="slate"] .md-typeset h3 {
   color: var(--acodo-light-green);
 }
-
-/* Legibilidad según Practical Typography (la comprueba `site.py measure`):
-   interlineado del 120-145 % y unos 75 caracteres por línea. Tablas, código
-   y figuras conservan todo el ancho. */
-.md-typeset {
-  line-height: 1.4;
-}
-
-/* También dentro de la referencia de la API (mkdocstrings: .doc-contents). */
-.md-typeset > :is(p, ul, ol, dl, blockquote, .admonition, details),
-.md-typeset .doc-contents > :is(p, ul, ol, dl, blockquote, .admonition, details) {
-  max-width: 58ch;
-}
