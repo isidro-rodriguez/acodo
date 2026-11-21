@@ -45,6 +45,9 @@ _MAX_TIMEDELTA_SECONDS = 1e12
 
 _DURATION_RE = re.compile(r"(\d+(?:[.,]\d+)?)\s*(d|h|min|m|s)")
 
+# Versión `X.Y.Z` (con `v` opcional delante), sin pre-release ni metadatos.
+_VERSION_RE = re.compile(r"[vV]?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)")
+
 _DURATION_UNITS = {"d": 86400, "h": 3600, "min": 60, "m": 60, "s": 1}
 
 # Reloj `H:MM:SS` o `M:SS` (el formato de `parse_timedelta` y de ffprobe), con
@@ -621,3 +624,33 @@ def to_timedelta(raw: str | float | None) -> timedelta | None:
     ):
         return None
     return timedelta(seconds=seconds)
+
+
+def to_version(raw: str | None) -> tuple[int, int, int] | None:
+    """Convierte una versión `X.Y.Z` (con o sin `v` delante) a tupla de enteros.
+
+    Las tuplas se comparan en orden, así que sirven para saber si una versión
+    es posterior a otra. Se rechazan las pre-releases (`1.0.0-rc.1`,
+    `1.0.0rc1`), los metadatos (`+build`) y los ceros a la izquierda (`01.2.3`).
+
+    Args:
+        raw: Texto de la versión, por ejemplo el tag de una release.
+
+    Returns:
+        La tupla `(major, minor, patch)`, o `None` si no es una versión `X.Y.Z`.
+
+    Examples:
+        >>> to_version("v0.39.3")
+        (0, 39, 3)
+        >>> to_version("0.40.0") > to_version("v0.39.3")
+        True
+        >>> to_version("1.0.0rc1") is None
+        True
+    """
+    if not isinstance(raw, str):
+        return None
+    found = _VERSION_RE.fullmatch(raw.strip())
+    if found is None:
+        return None
+    major, minor, patch = (int(part) for part in found.groups())
+    return major, minor, patch

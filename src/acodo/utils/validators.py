@@ -28,6 +28,7 @@ from .converters import (
     to_path,
     to_port,
     to_timedelta,
+    to_version,
 )
 from .types import SocialLink
 
@@ -943,3 +944,21 @@ def valid_uuid(raw: str) -> bool:
         )
         is not None
     )
+
+
+def valid_version(raw: str) -> bool:
+    """Comprueba si el string es una versión `X.Y.Z` aceptada por `to_version`.
+
+    Args:
+        raw: String a validar.
+
+    Returns:
+        `True` si es `X.Y.Z` o `vX.Y.Z` sin pre-release ni metadatos.
+
+    Examples:
+        >>> valid_version("v1.2.3")
+        True
+        >>> valid_version("1.2")
+        False
+    """
+    return to_version(raw) is not None

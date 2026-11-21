@@ -120,6 +120,9 @@ from .converters import (
 from .converters import (
     to_timedelta as to_timedelta,
 )
+from .converters import (
+    to_version as to_version,
+)
 from .getters import (
     get_config_dir as get_config_dir,
 )
@@ -270,6 +273,9 @@ from .validators import (
 )
 from .validators import (
     valid_uuid as valid_uuid,
+)
+from .validators import (
+    valid_version as valid_version,
 )
 
 __all__ = [

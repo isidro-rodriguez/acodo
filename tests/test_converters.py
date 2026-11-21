@@ -373,3 +373,32 @@ def test_to_json(raw: str | bytes | None, expected: object) -> None:
 def test_to_timedelta_reads_parse_timedelta(seconds: int) -> None:
     duration = timedelta(seconds=seconds)
     assert iu.to_timedelta(iu.parse_timedelta(duration)) == duration
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("0.39.3", (0, 39, 3)),
+        ("v1.2.3", (1, 2, 3)),
+        ("V10.0.0", (10, 0, 0)),
+        (" 2.0.1 ", (2, 0, 1)),
+        ("1.2", None),
+        ("1.2.3.4", None),
+        ("1.0.0rc1", None),
+        ("1.0.0-rc.1", None),
+        ("1.0.0+abc", None),
+        ("01.2.3", None),
+        ("", None),
+        (None, None),
+    ],
+)
+def test_to_version(raw: str | None, expected: tuple[int, int, int] | None) -> None:
+    assert iu.to_version(raw) == expected
+
+
+def test_to_version_orders_releases() -> None:
+    # Comparación numérica, no de texto: 0.10 va después de 0.9.
+    parsed = [iu.to_version(raw) for raw in ("v0.9.12", "0.10.0", "0.10.1", "1.0.0")]
+    versions = [version for version in parsed if version is not None]
+    assert len(versions) == 4
+    assert versions == sorted(versions)

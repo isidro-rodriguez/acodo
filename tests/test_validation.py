@@ -674,3 +674,17 @@ def test_valid_postal_code(raw: str, expected: bool) -> None:
 )
 def test_valid_social_url(raw: str, link: str, expected: bool) -> None:
     assert iu.valid_social_url(raw, SocialLink[link]) is expected
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("1.2.3", True),
+        ("v0.0.1", True),
+        ("1.2", False),
+        ("1.0.0-rc.1", False),
+        ("", False),
+    ],
+)
+def test_valid_version(raw: str, expected: bool) -> None:
+    assert iu.valid_version(raw) is expected

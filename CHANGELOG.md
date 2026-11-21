@@ -7,6 +7,12 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Added
+
+- `to_version(raw)` y `valid_version(raw)`: versiones `X.Y.Z` (con `v` opcional) como tupla
+  de enteros comparable, para saber si una release es posterior a otra. Rechazan
+  pre-releases, metadatos y ceros a la izquierda.
+
 ## [0.6.0] - 2026-11-21
 
 ### Added
