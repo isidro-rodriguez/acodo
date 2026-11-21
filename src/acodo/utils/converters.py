@@ -47,6 +47,10 @@ _DURATION_RE = re.compile(r"(\d+(?:[.,]\d+)?)\s*(d|h|min|m|s)")
 
 _DURATION_UNITS = {"d": 86400, "h": 3600, "min": 60, "m": 60, "s": 1}
 
+# Reloj `H:MM:SS` o `M:SS` (el formato de `parse_timedelta` y de ffprobe), con
+# signo y decimales opcionales en los segundos.
+_CLOCK_RE = re.compile(r"(-?)(?:(\d+):)?([0-5]?\d):([0-5]?\d(?:[.,]\d+)?)")
+
 # Los nombres de mes/día (%a %b %B) dependen del locale activo.
 _NAMED_MONTH_FORMATS = (
     "%a %b %d %H:%M:%S %Y",
@@ -561,12 +565,31 @@ def to_str(raw: object) -> str | None:
     return raw if isinstance(raw, str) and raw.strip() else None
 
 
+def _duration_seconds(text: str) -> float | None:
+    """Segundos de un reloj (`H:MM:SS`, `M:SS`) o de un texto con unidades."""
+    if clock := _CLOCK_RE.fullmatch(text):
+        sign, hours, minutes, secs = clock.groups()
+        total = (
+            int(hours or 0) * 3600 + int(minutes) * 60 + float(secs.replace(",", "."))
+        )
+        return -total if sign else total
+    tokens = _DURATION_RE.findall(text)
+    if not tokens or _DURATION_RE.sub("", text).strip():
+        return None
+    return sum(
+        float(number.replace(",", ".")) * _DURATION_UNITS[unit]
+        for number, unit in tokens
+    )
+
+
 def to_timedelta(raw: str | float | None) -> timedelta | None:
     """Convierte segundos o un texto de duración a timedelta.
 
     Con un `str` se interpreta una duración con unidades: `d`, `h`,
     `min`/`m` y `s`, con decimales y separadas por espacios opcionales
-    (`"1h 30m"`, `"1,5h"`). Un texto sin unidades (`"90"`) no es válido.
+    (`"1h 30m"`, `"1,5h"`), o un reloj `H:MM:SS` o `M:SS` con decimales y signo
+    opcionales (`"1:02:05"`, `"0:01:30.5"`, `"-1:05"`), el formato que produce
+    `parse_timedelta`. Un texto sin unidades (`"90"`) no es válido.
 
     Args:
         raw: Cantidad de segundos, o texto de duración.
@@ -580,18 +603,13 @@ def to_timedelta(raw: str | float | None) -> timedelta | None:
         datetime.timedelta(seconds=90)
         >>> to_timedelta("1h 30m")
         datetime.timedelta(seconds=5400)
+        >>> to_timedelta("1:02:05")
+        datetime.timedelta(seconds=3725)
         >>> to_timedelta("1h30x") is None
         True
     """
     if isinstance(raw, str):
-        text = raw.strip().casefold()
-        tokens = _DURATION_RE.findall(text)
-        if not tokens or _DURATION_RE.sub("", text).strip():
-            return None
-        seconds = sum(
-            float(number.replace(",", ".")) * _DURATION_UNITS[unit]
-            for number, unit in tokens
-        )
+        seconds = _duration_seconds(raw.strip().casefold())
     elif isinstance(raw, bool):
         return None
     else:

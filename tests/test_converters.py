@@ -318,6 +318,15 @@ def test_to_str(raw: object, expected: str | None) -> None:
         ("45s", timedelta(seconds=45)),
         ("1,5h", timedelta(minutes=90)),
         (" 1H ", timedelta(hours=1)),
+        ("1:02:05", timedelta(seconds=3725)),
+        ("48:00:00", timedelta(days=2)),
+        ("0:01:30.5", timedelta(seconds=90.5)),
+        ("00:00:01,25", timedelta(seconds=1.25)),
+        ("1:05", timedelta(seconds=65)),
+        ("-1:05", timedelta(seconds=-65)),
+        ("1:60", None),
+        ("1:2:3:4", None),
+        (":30", None),
         ("1h30x", None),
         ("1m30", None),
         ("5", None),
@@ -358,3 +367,9 @@ def test_to_timedelta(raw: str | float | None, expected: timedelta | None) -> No
 )
 def test_to_json(raw: str | bytes | None, expected: object) -> None:
     assert iu.to_json(raw) == expected
+
+
+@pytest.mark.parametrize("seconds", [0, 59, 65, 3725, 172800, -65])
+def test_to_timedelta_reads_parse_timedelta(seconds: int) -> None:
+    duration = timedelta(seconds=seconds)
+    assert iu.to_timedelta(iu.parse_timedelta(duration)) == duration

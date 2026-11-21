@@ -118,6 +118,8 @@ def test_valid_domain(raw: str, expected: bool) -> None:
         ("1h 30m", True),
         ("2d", True),
         ("1,5h", True),
+        ("1:02:05", True),
+        ("1:60", False),
         ("1h30x", False),
         ("basura", False),
         ("", False),
