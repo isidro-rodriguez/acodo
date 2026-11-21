@@ -12,6 +12,8 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 - `to_version(raw)` y `valid_version(raw)`: versiones `X.Y.Z` (con `v` opcional) como tupla
   de enteros comparable, para saber si una release es posterior a otra. Rechazan
   pre-releases, metadatos y ceros a la izquierda.
+- `parse_count(raw, one, many)`: cantidad con el nombre en singular o plural
+  (`1 fuente`, `3 fuentes`).
 
 ### Changed
 

@@ -116,6 +116,26 @@ def parse_bool(raw: bool, lang: str | None = None) -> str:
     return "Sí" if raw else "No"
 
 
+def parse_count(raw: int, one: str, many: str) -> str:
+    """Parsea una cantidad con el nombre en singular o plural.
+
+    Args:
+        raw: Cantidad.
+        one: Nombre para una unidad (`"fuente"`).
+        many: Nombre para cero o varias (`"fuentes"`).
+
+    Returns:
+        La cantidad seguida del nombre que le corresponde.
+
+    Examples:
+        >>> parse_count(1, "fuente", "fuentes")
+        '1 fuente'
+        >>> parse_count(0, "fuente", "fuentes")
+        '0 fuentes'
+    """
+    return f"{raw} {one if raw == 1 else many}"
+
+
 def parse_datetime(raw: date | datetime, lang: str | None = None) -> str:
     """Parsea una fecha o fecha-hora a string legible.
 

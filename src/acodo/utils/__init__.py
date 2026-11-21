@@ -169,6 +169,9 @@ from .parsers import (
     parse_bool as parse_bool,
 )
 from .parsers import (
+    parse_count as parse_count,
+)
+from .parsers import (
     parse_datetime as parse_datetime,
 )
 from .parsers import (

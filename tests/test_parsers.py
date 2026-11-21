@@ -150,3 +150,11 @@ def test_parse_slug(raw: str, expected: str) -> None:
 )
 def test_parse_timedelta(seconds: int, expected: str) -> None:
     assert iu.parse_timedelta(timedelta(seconds=seconds)) == expected
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [(0, "0 fuentes"), (1, "1 fuente"), (2, "2 fuentes"), (-1, "-1 fuentes")],
+)
+def test_parse_count(raw: int, expected: str) -> None:
+    assert iu.parse_count(raw, "fuente", "fuentes") == expected
