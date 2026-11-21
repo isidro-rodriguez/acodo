@@ -7,6 +7,14 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-21
+
+### Added
+
+- `to_timedelta` y `valid_duration` aceptan un reloj `H:MM:SS` o `M:SS`, con decimales y
+  signo opcionales (`"1:02:05"`, `"0:01:30.5"`, `"-1:05"`): leen lo que escribe
+  `parse_timedelta` y las duraciones de ffprobe.
+
 ## [0.5.1] - 2026-11-03
 
 ### Fixed
