@@ -46,7 +46,7 @@ Errores lanzados
 Solo se lanza `ValueError` ante argumentos ambiguos o inválidos:
 
 - `get_*` (algoritmo, rango, longitud...)
-- `parse_*` (`lang`),
+- `parse_*` (`lang`, `decimals`),
 - `valid_cidr` y `valid_ip` (`version`),
 - `valid_int` (`minimum` mayor que `maximum`),
 - `valid_password`.

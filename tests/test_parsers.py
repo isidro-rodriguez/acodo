@@ -91,18 +91,36 @@ def test_parse_percent(
         (0, "0 bytes"),
         (1, "1 byte"),
         (1023, "1023 bytes"),
-        (1024, "1,000 KiB"),
-        (1536, "1,500 KiB"),
-        (1048575, "1023,999 KiB"),
-        (1048576, "1,000 MiB"),
-        (1024**3, "1,000 GiB"),
-        (1024**4, "1,000 TiB"),
-        (1024**5, "1,000 PiB"),
-        (1024**6, "1024,000 PiB"),
+        (1024, "1,0 KiB"),
+        (1536, "1,5 KiB"),
+        (1048575, "1,0 MiB"),
+        (1048576, "1,0 MiB"),
+        (1024**3, "1,0 GiB"),
+        (1024**4, "1,0 TiB"),
+        (1024**5, "1,0 PiB"),
+        (1024**6, "1024,0 PiB"),
     ],
 )
 def test_parse_size(raw: int, expected: str) -> None:
     assert iu.parse_size(raw) == expected
+
+
+@pytest.mark.parametrize(
+    ("raw", "decimals", "expected"),
+    [
+        (1048575, 3, "1023,999 KiB"),
+        (1536, 0, "2 KiB"),
+        (1023, 2, "1023 bytes"),
+        (1024**3 + 1024**2 * 512, 2, "1,50 GiB"),
+    ],
+)
+def test_parse_size_decimals(raw: int, decimals: int, expected: str) -> None:
+    assert iu.parse_size(raw, decimals) == expected
+
+
+def test_parse_size_rejects_negative_decimals() -> None:
+    with pytest.raises(ValueError, match="decimales"):
+        iu.parse_size(2048, -1)
 
 
 @pytest.mark.parametrize(

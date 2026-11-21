@@ -192,36 +192,44 @@ def parse_percent(
     return f"{text.translate(_SWAP_SEPARATORS)} %"
 
 
-def parse_size(raw: int) -> str:
+def parse_size(raw: int, decimals: int = 1) -> str:
     """Parsea el tamaño de fichero a su unidad ISO/IEC 80000-13 correspondiente.
 
     Args:
         raw: Tamaño de fichero, en bytes, a parsear.
+        decimals: Decimales del valor en KiB o superior (los bytes no llevan).
 
     Returns:
         String de tamaño de fichero con legibilidad cómoda.
+
+    Raises:
+        ValueError: Si `decimals` es negativo.
 
     Examples:
         >>> parse_size(1)
         '1 byte'
         >>> parse_size(1536)
-        '1,500 KiB'
+        '1,5 KiB'
         >>> parse_size(1048575)
+        '1,0 MiB'
+        >>> parse_size(1048575, decimals=3)
         '1023,999 KiB'
     """
+    if decimals < 0:
+        raise ValueError(f"Número de decimales no válido: {decimals}.")
     if raw < 1024:
         return f"{raw} {'byte' if raw == 1 else 'bytes'}"
 
     value = raw / 1024
     unit = _SIZE_UNITS[0]
     for next_unit in _SIZE_UNITS[1:]:
-        # Se compara el valor ya redondeado para no mostrar "1024,000 KiB".
-        if round(value, 3) < 1024:
+        # Se compara el valor ya redondeado para no mostrar "1024,0 KiB".
+        if round(value, decimals) < 1024:
             break
         value /= 1024
         unit = next_unit
 
-    return f"{value:.3f} {unit}".translate(_SWAP_SEPARATORS)
+    return f"{value:.{decimals}f} {unit}".translate(_SWAP_SEPARATORS)
 
 
 def parse_slug(raw: str) -> str:

@@ -13,6 +13,11 @@ proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
   de enteros comparable, para saber si una release es posterior a otra. Rechazan
   pre-releases, metadatos y ceros a la izquierda.
 
+### Changed
+
+- `parse_size(raw, decimals=1)`: los decimales se pueden elegir y por defecto pasan de 3 a 1
+  (`1,5 KiB` en vez de `1,500 KiB`); `decimals=3` mantiene la salida anterior.
+
 ## [0.6.0] - 2026-11-21
 
 ### Added
